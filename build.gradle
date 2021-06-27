@@ -1,0 +1,112 @@
+import java.text.SimpleDateFormat
+
+plugins {
+    id 'java'
+    id 'checkstyle'
+    id "com.github.spotbugs" version "4.7.1"
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+}
+
+group = "com.snowypeaksystems.exampleplugin"
+
+if (hasProperty('ver')) {
+    if (ver.charAt(0) == "v") {
+        version = ver.substring(1)
+    } else {
+        version = ver
+    }
+} else {
+    SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd-HHmm")
+    sdf.setTimeZone(TimeZone.getTimeZone("UTC"))
+    version = sdf.format(new Date()).toString()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_16
+    targetCompatibility = JavaVersion.VERSION_16
+}
+
+repositories {
+    mavenCentral {
+        content {
+            excludeModule("com.destroystokyo.paper", "paper-api")
+            excludeModule("io.papermc", "paperlib")
+        }
+    }
+
+    maven {
+        name 'papermc'
+        url 'https://papermc.io/repo/repository/maven-public/'
+        content {
+            excludeModule("com.github.spotbugs", "spotbugs-annotations")
+            excludeModule("com.h3xstream.findsecbugs", "findsecbugs-plugin")
+            excludeModule("org.junit.jupiter", "junit-jupiter-api")
+            excludeModule("org.junit.jupiter", "junit-jupiter-engine")
+        }
+    }
+}
+
+dependencies {
+    compileOnly 'com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT'
+    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.2.3'
+    implementation 'io.papermc:paperlib:1.0.6'
+    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.11.0'
+    testCompileOnly 'com.github.spotbugs:spotbugs-annotations:3.1.2'
+    testImplementation 'com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+processResources {
+    filesMatching("**/plugin.yml") {
+        expand ( NAME: rootProject.name, VERSION: version, PACKAGE: project.group.toString() )
+    }
+}
+
+checkstyle {
+    toolVersion '8.42'
+    maxWarnings = 0
+}
+
+tasks.withType(Checkstyle) {
+    reports {
+        xml.enabled false
+        html.enabled true
+    }
+}
+
+spotbugsMain {
+    reports {
+        xml.enabled false
+        html.enabled true
+    }
+}
+
+spotbugsTest {
+    reports {
+        xml.enabled false
+        html.enabled true
+    }
+}
+
+shadowJar {
+    archiveClassifier.set('SNAPSHOT')
+    relocate 'io.papermc.lib', 'shadow.io.papermc.paperlib'
+    minimize()
+}
+
+jar.enabled = false
+assemble.dependsOn(shadowJar)
+
+task release {
+    dependsOn build
+    doLast {
+        def dirStr = buildDir.toString() + File.separator + 'libs' + File.separator
+
+        file(dirStr + rootProject.name + '-' + version + '-SNAPSHOT.jar').renameTo(dirStr + rootProject.name + '.jar')
+    }
+}
