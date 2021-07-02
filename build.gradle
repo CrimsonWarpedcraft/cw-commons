@@ -1,48 +1,36 @@
 import java.text.SimpleDateFormat
 
 plugins {
-    id 'java'
     id 'checkstyle'
     id "com.github.spotbugs" version "4.7.1"
     id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'java'
+    id 'maven-publish'
 }
 
-group = "com.snowypeaksystems.exampleplugin"
+group = "com.snowypeaksystems.cwcommons"
 
+SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd-HHmm")
+sdf.setTimeZone(TimeZone.getTimeZone("UTC"))
+String shortVersion = sdf.format(new Date()).toString()
 if (hasProperty('ver')) {
     if (ver.charAt(0) == "v") {
-        version = ver.substring(1)
+        shortVersion = ver.substring(1)
     } else {
-        version = ver
+        shortVersion = ver
     }
-} else {
-    SimpleDateFormat sdf = new SimpleDateFormat("yyMMdd-HHmm")
-    sdf.setTimeZone(TimeZone.getTimeZone("UTC"))
-    version = sdf.format(new Date()).toString()
 }
 
+version = shortVersion + "-SNAPSHOT"
+
 java {
-    sourceCompatibility = JavaVersion.VERSION_16
-    targetCompatibility = JavaVersion.VERSION_16
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 repositories {
-    mavenCentral {
-        content {
-            excludeModule("com.destroystokyo.paper", "paper-api")
-            excludeModule("io.papermc", "paperlib")
-        }
-    }
-
     maven {
-        name 'papermc'
-        url 'https://papermc.io/repo/repository/maven-public/'
-        content {
-            excludeModule("com.github.spotbugs", "spotbugs-annotations")
-            excludeModule("com.h3xstream.findsecbugs", "findsecbugs-plugin")
-            excludeModule("org.junit.jupiter", "junit-jupiter-api")
-            excludeModule("org.junit.jupiter", "junit-jupiter-engine")
-        }
+        url 'https://mvn.snowypeaksystems.com/repository/maven-public/'
     }
 }
 
@@ -94,19 +82,44 @@ spotbugsTest {
 }
 
 shadowJar {
-    archiveClassifier.set('SNAPSHOT')
+    archiveClassifier.set('')
     relocate 'io.papermc.lib', 'shadow.io.papermc.paperlib'
     minimize()
 }
 
+URI mavenRepoUri = uri("https://mvn.snowypeaksystems.com/repository/maven-snapshots/")
+String buildDir = buildDir.toString() + File.separator + 'libs' + File.separator
+publishing {
+    repositories {
+        maven {
+            url = mavenRepoUri
+            credentials {
+                username = System.getenv("SPS_MVN_USER")
+                password = System.getenv("SPS_MVN_PASS")
+            }
+        }
+    }
+    publications {
+        spsmvn(MavenPublication) {
+            artifact file(buildDir + rootProject.name + '-' + version + '.jar')
+        }
+    }
+}
+
 jar.enabled = false
 assemble.dependsOn(shadowJar)
+publish.dependsOn(build)
 
 task release {
-    dependsOn build
-    doLast {
-        def dirStr = buildDir.toString() + File.separator + 'libs' + File.separator
+    dependsOn publish
 
-        file(dirStr + rootProject.name + '-' + version + '-SNAPSHOT.jar').renameTo(dirStr + rootProject.name + '.jar')
+    doFirst {
+        version = shortVersion
+        mavenRepoUri = uri("https://mvn.snowypeaksystems.com/repository/maven-releases/")
+    }
+
+    doLast {
+        file(buildDir + rootProject.name + '-' + version + '.jar')
+                .renameTo(rootProject.name + '.jar')
     }
 }
