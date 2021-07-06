@@ -74,28 +74,28 @@ processResources {
 }
 
 checkstyle {
-    toolVersion '8.42'
+    toolVersion '8.44'
     maxWarnings = 0
 }
 
 tasks.withType(Checkstyle) {
     reports {
-        xml.enabled false
-        html.enabled true
+        xml.required = false
+        html.required = true
     }
 }
 
 spotbugsMain {
     reports {
-        xml.enabled false
-        html.enabled true
+        xml.required = false
+        html.required = true
     }
 }
 
 spotbugsTest {
     reports {
-        xml.enabled false
-        html.enabled true
+        xml.required = false
+        html.required = true
     }
 }
 
