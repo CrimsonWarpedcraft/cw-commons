@@ -1,6 +1,0 @@
-main: ${PACKAGE}.${NAME}
-name: ${NAME}
-version: "${VERSION}"
-api-version: "1.16"
-author: Levi Muniz
-description: Library for common Crimson Warpcraft plugin functionality
