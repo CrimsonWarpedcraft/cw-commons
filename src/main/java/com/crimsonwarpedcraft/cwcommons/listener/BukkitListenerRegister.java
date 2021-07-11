@@ -15,8 +15,8 @@ public class BukkitListenerRegister {
   private final PluginManager manager;
 
   private BukkitListenerRegister(Plugin plugin) {
-    this.plugin = plugin;
-    this.manager = plugin.getServer().getPluginManager();
+    this.plugin = Objects.requireNonNull(plugin);
+    this.manager = Objects.requireNonNull(plugin).getServer().getPluginManager();
   }
 
   /**
@@ -38,6 +38,6 @@ public class BukkitListenerRegister {
    * @return a ListenerRegister object
    */
   public static BukkitListenerRegister getNewBukkitListenerRegister(Plugin plugin) {
-    return new BukkitListenerRegister(Objects.requireNonNull(plugin));
+    return new BukkitListenerRegister(plugin);
   }
 }

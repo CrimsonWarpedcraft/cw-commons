@@ -20,11 +20,11 @@ public class PaperCommandRegister {
    * @return a new CommandRegister instance
    */
   public static PaperCommandRegister getNewPaperCommandRegister(Plugin plugin) {
-    return new PaperCommandRegister(Objects.requireNonNull(plugin));
+    return new PaperCommandRegister(plugin);
   }
 
   private PaperCommandRegister(Plugin plugin) {
-    manager = new PaperCommandManager(plugin);
+    manager = new PaperCommandManager(Objects.requireNonNull(plugin));
   }
 
   /** Registers a command. */
