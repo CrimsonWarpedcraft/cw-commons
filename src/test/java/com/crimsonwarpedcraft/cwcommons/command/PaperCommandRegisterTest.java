@@ -2,6 +2,7 @@ package com.crimsonwarpedcraft.cwcommons.command;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.crimsonwarpedcraft.cwcommons.mock.MockPlugin;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -16,6 +17,15 @@ class PaperCommandRegisterTest {
     assertThrows(
         NullPointerException.class,
         () -> PaperCommandRegister.getNewPaperCommandRegister(null)
+    );
+  }
+
+  @Test
+  void register() {
+    // Check NPE
+    assertThrows(
+        NullPointerException.class,
+        () -> PaperCommandRegister.getNewPaperCommandRegister(new MockPlugin()).register(null)
     );
   }
 }
