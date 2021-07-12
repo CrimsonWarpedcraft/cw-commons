@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */
-@SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
+@SuppressFBWarnings({"NP_NONNULL_RETURN_VIOLATION", "EI_EXPOSE_REP"})
 public class MockPluginManager implements PluginManager {
   private final Set<Listener> listeners = new HashSet<>();
   private Result result = Result.DEFAULT;
