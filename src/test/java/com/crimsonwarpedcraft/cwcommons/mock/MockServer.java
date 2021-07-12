@@ -88,7 +88,7 @@ public class MockServer implements Server {
 
   @Override
   public @NotNull String getVersion() {
-    return null;
+    return "(MC: 1.16.5)";
   }
 
   @Override
@@ -342,7 +342,7 @@ public class MockServer implements Server {
 
   @Override
   public @NotNull Logger getLogger() {
-    return null;
+    return Logger.getLogger(this.getClass().getName());
   }
 
   @Override
