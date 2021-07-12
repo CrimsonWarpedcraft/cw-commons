@@ -74,7 +74,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */
-@SuppressFBWarnings("NP_NONNULL_RETURN_VIOLATION")
+@SuppressFBWarnings({"NP_NONNULL_RETURN_VIOLATION", "EI_EXPOSE_REP"})
 public class MockServer implements Server {
   private final HashSet<Player> players = new HashSet<>();
   private final HashMap<String, World> worlds = new HashMap<>();

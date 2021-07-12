@@ -91,7 +91,12 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */
-@SuppressFBWarnings({"NP_NONNULL_RETURN_VIOLATION", "NP_METHOD_RETURN_RELAXING_ANNOTATION"})
+@SuppressFBWarnings({
+    "NP_NONNULL_RETURN_VIOLATION",
+    "NP_METHOD_RETURN_RELAXING_ANNOTATION",
+    "EI_EXPOSE_REP",
+    "EI_EXPOSE_REP2"
+})
 public class MockPlayer implements Player {
   private final AttributeInstance maxHealthAttribute;
   private final Map<String, Boolean> permissions = new HashMap<>();
