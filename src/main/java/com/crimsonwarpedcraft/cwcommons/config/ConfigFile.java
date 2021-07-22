@@ -58,7 +58,7 @@ public abstract class ConfigFile {
     }
   }
 
-  protected FileConfiguration getConfig(){
+  protected FileConfiguration getConfig() {
     return config;
   }
 
