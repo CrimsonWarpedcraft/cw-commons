@@ -59,4 +59,8 @@ public class BukkitPlayer<T extends PlayerData> extends BukkitUser {
   public T getPlayerData() {
     return data;
   }
+
+  protected Player getPlayer() {
+    return player;
+  }
 }

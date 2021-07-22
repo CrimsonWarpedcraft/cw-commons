@@ -27,4 +27,8 @@ public class BukkitUser {
   public String getName() {
     return sender.getName();
   }
+
+  protected CommandSender getSender() {
+    return sender;
+  }
 }

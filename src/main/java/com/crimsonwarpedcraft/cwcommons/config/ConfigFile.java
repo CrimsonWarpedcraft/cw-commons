@@ -14,7 +14,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */
 public abstract class ConfigFile {
-  protected final FileConfiguration config;
+  private final FileConfiguration config;
 
   protected ConfigFile(File file) throws ConfigurationException {
     try {
@@ -56,6 +56,10 @@ public abstract class ConfigFile {
           e
       );
     }
+  }
+
+  protected FileConfiguration getConfig(){
+    return config;
   }
 
   protected abstract Set<ConfigOption> getDefaults();

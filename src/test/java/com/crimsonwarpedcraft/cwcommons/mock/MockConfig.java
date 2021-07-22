@@ -18,7 +18,7 @@ public class MockConfig extends ConfigFile {
   }
 
   public String getTestVal() {
-    return config.getString("test1");
+    return getConfig().getString("test1");
   }
 
   @Override
