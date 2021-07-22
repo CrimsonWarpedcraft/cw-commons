@@ -17,7 +17,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests for UhcUserStoreGarbageCollector.
+ * Tests for UserStoreLogoutMonitor.
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */

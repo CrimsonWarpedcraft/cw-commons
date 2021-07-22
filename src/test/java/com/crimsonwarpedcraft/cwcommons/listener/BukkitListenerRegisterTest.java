@@ -10,7 +10,7 @@ import org.bukkit.event.Listener;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests for ListenerRegister.
+ * Tests for BukkitListenerRegister.
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */
