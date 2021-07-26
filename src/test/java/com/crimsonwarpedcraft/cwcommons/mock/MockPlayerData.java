@@ -30,4 +30,8 @@ public class MockPlayerData extends PlayerData {
   public PlayerData copy() {
     return new MockPlayerData(this);
   }
+
+  public static MockPlayerData of(PlayerData data) {
+    return (MockPlayerData) data;
+  }
 }

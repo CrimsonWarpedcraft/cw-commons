@@ -13,18 +13,18 @@ import org.bukkit.entity.Player;
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */
-public class BukkitPlayer<T extends PlayerData> extends BukkitUser {
+public class BukkitPlayer extends BukkitUser {
   private final Player player;
-  private final T data;
+  private final PlayerData data;
 
-  protected BukkitPlayer(Player player, T data) {
+  protected BukkitPlayer(Player player, PlayerData data) {
     super(Objects.requireNonNull(player));
     this.player = player;
     this.data = Objects.requireNonNull(data);
   }
 
   /** Sets the player's game mode. */
-  public BukkitPlayer<T> setGameMode(GameMode gameMode) {
+  public BukkitPlayer setGameMode(GameMode gameMode) {
     player.setGameMode(Objects.requireNonNull(gameMode));
 
     return this;
@@ -56,7 +56,7 @@ public class BukkitPlayer<T extends PlayerData> extends BukkitUser {
   }
 
   /** Returns the PlayerData for this player. */
-  public T getPlayerData() {
+  public PlayerData getPlayerData() {
     return data;
   }
 

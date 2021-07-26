@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
  */
 @SuppressFBWarnings("PATH_TRAVERSAL_IN")
 class BukkitUserTest {
-  private static UserStore<MockPlayerData> store;
+  private static UserStore store;
 
   @BeforeAll
   static void setUp() {

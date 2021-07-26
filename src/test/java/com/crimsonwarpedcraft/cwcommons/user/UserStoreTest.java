@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
  */
 @SuppressFBWarnings("PATH_TRAVERSAL_IN")
 class UserStoreTest {
-  private static UserStore<MockPlayerData> store;
+  private static UserStore store;
 
   @BeforeAll
   static void setUp() {
@@ -59,7 +59,7 @@ class UserStoreTest {
     );
 
     // Get a BukkitPlayer instance
-    BukkitPlayer<MockPlayerData> player = store.getUser(mockPlayer);
+    BukkitPlayer player = store.getUser(mockPlayer);
 
     // Make sure that we get the same instance after each call
     assertSame(
@@ -86,11 +86,13 @@ class UserStoreTest {
 
 
     // Get a BukkitPlayer instance
-    BukkitPlayer<MockPlayerData> player = store.getUser(mockPlayer);
+    BukkitPlayer player = store.getUser(mockPlayer);
 
     // Modify the player's data
-    player
-        .getPlayerData()
+    MockPlayerData
+        .of(
+            player.getPlayerData()
+        )
         .setRandomVal(5);
 
     // Delete the instance from the store
@@ -107,9 +109,12 @@ class UserStoreTest {
     // Make sure we get the stored value back
     assertEquals(
         5,
-        store
-            .getUser(mockPlayer)
-            .getPlayerData()
+        MockPlayerData
+            .of(
+                store
+                    .getUser(mockPlayer)
+                    .getPlayerData()
+            )
             .getRandomVal()
     );
   }

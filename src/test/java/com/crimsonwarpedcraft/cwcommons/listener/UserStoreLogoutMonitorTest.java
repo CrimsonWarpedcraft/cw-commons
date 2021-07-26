@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
  */
 @SuppressFBWarnings("PATH_TRAVERSAL_IN")
 class UserStoreLogoutMonitorTest {
-  private static UserStore<MockPlayerData> store;
+  private static UserStore store;
 
   @BeforeAll
   @SuppressFBWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
@@ -52,7 +52,7 @@ class UserStoreLogoutMonitorTest {
     MockPlayer mockPlayer = new MockPlayer();
 
     // Store the player in the user store
-    BukkitPlayer<MockPlayerData> player = store.getUser(mockPlayer);
+    BukkitPlayer player = store.getUser(mockPlayer);
 
     // Run the event listener
     monitor.onPlayerQuit(

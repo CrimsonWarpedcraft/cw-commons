@@ -21,11 +21,11 @@ import org.bukkit.entity.Player;
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */
-public class UserStore<T extends PlayerData> {
-  private final Class<T> playerDataClass;
+public class UserStore {
+  private final Class<? extends PlayerData> playerDataClass;
   private final File dataDirectory;
-  private final Map<Player, BukkitPlayer<T>> players;
-  private final T defaultPlayerData;
+  private final Map<Player, BukkitPlayer> players;
+  private final PlayerData defaultPlayerData;
 
   /**
    * Returns a new UserStore instance which persists player data.
@@ -34,10 +34,10 @@ public class UserStore<T extends PlayerData> {
    * @param playerDataClass the PlayerData class to use for storing persistent data
    * @param defaultPlayerData a PlayerData object to be used as the default object
    */
-  public static <T extends PlayerData> UserStore<T> getNewUserStore(
+  public static UserStore getNewUserStore(
       File dataDirectory,
-      Class<T> playerDataClass,
-      T defaultPlayerData
+      Class<? extends PlayerData> playerDataClass,
+      PlayerData defaultPlayerData
   ) throws FileNotFoundException {
     Objects.requireNonNull(dataDirectory);
 
@@ -46,13 +46,13 @@ public class UserStore<T extends PlayerData> {
           + " does not exist and could not be created");
     }
 
-    return new UserStore<>(dataDirectory, playerDataClass, defaultPlayerData);
+    return new UserStore(dataDirectory, playerDataClass, defaultPlayerData);
   }
 
   protected UserStore(
       File dataDirectory,
-      Class<T> playerDataClass,
-      T defaultPlayerData
+      Class<? extends PlayerData> playerDataClass,
+      PlayerData defaultPlayerData
   ) {
     players = new HashMap<>();
     this.dataDirectory = dataDirectory;
@@ -64,21 +64,14 @@ public class UserStore<T extends PlayerData> {
    * Gets the BukkitPlayer for the Player.
    *
    * @param player the player to get the BukkitPlayer from
-   * @return the existing BukkitPlayer for this Player if found, otherwise a new instance is
-   *     returned
+   * @return the existing BukkitPlayer for this Player if found, otherwise a new instance
    */
-  public BukkitPlayer<T> getUser(Player player) {
-    Objects.requireNonNull(player);
-
-    if (players.containsKey(player)) {
-      return players.get(player);
+  public BukkitPlayer getUser(Player player) {
+    if (!players.containsKey(Objects.requireNonNull(player))) {
+      putNewPlayer(player);
     }
 
-    BukkitPlayer<T> bukkitPlayer = new BukkitPlayer<>(player, loadPlayerData(player));
-
-    players.put(player, bukkitPlayer);
-
-    return bukkitPlayer;
+    return players.get(player);
   }
 
   /**
@@ -94,8 +87,8 @@ public class UserStore<T extends PlayerData> {
   /** Removes an exising BukkitPlayer for the player. */
   // UUIDs are not specified by user input
   @SuppressFBWarnings("PATH_TRAVERSAL_IN")
-  public UserStore<T> unloadPlayer(Player player) throws IOException {
-    BukkitPlayer<T> removedPlayer = players.remove(Objects.requireNonNull(player));
+  public UserStore unloadPlayer(Player player) throws IOException {
+    BukkitPlayer removedPlayer = players.remove(Objects.requireNonNull(player));
 
     if (removedPlayer != null && dataDirectory != null) {
       File dataFile = new File(dataDirectory, removedPlayer.getUuid() + ".json");
@@ -107,8 +100,8 @@ public class UserStore<T extends PlayerData> {
 
   // UUIDs are not specified by user input
   @SuppressFBWarnings("PATH_TRAVERSAL_IN")
-  protected T loadPlayerData(Player player) {
-    T data = null;
+  protected PlayerData loadPlayerData(Player player) {
+    PlayerData data = null;
     // If we have data for this player, try to load it
     if (dataDirectory != null) {
       File dataFile = new File(dataDirectory, player.getUniqueId() + ".json");
@@ -137,9 +130,19 @@ public class UserStore<T extends PlayerData> {
     // If the data didn't get loaded and we have a default, use a copy of that
     PlayerData temp = defaultPlayerData.copy();
     if (data == null) {
-      data = (T) temp;
+      data = temp;
     }
 
     return data;
+  }
+
+  protected Map<Player, BukkitPlayer> getPlayers() {
+    return players;
+  }
+
+  protected void putNewPlayer(Player player) {
+    BukkitPlayer bukkitPlayer = new BukkitPlayer(player, loadPlayerData(player));
+
+    players.put(player, bukkitPlayer);
   }
 }

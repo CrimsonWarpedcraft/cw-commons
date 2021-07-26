@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
  */
 @SuppressFBWarnings("PATH_TRAVERSAL_IN")
 class BukkitPlayerTest {
-  private static UserStore<MockPlayerData> store;
+  private static UserStore store;
 
   @BeforeAll
   @SuppressFBWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
@@ -128,9 +128,12 @@ class BukkitPlayerTest {
     MockPlayer player = new MockPlayer();
     assertEquals(
         5,
-        store
-            .getUser(player)
-            .getPlayerData()
+        MockPlayerData
+            .of(
+                store
+                    .getUser(player)
+                    .getPlayerData()
+            )
             .getRandomVal()
     );
   }
