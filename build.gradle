@@ -53,7 +53,7 @@ repositories {
 
 dependencies {
     compileOnly 'com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT'
-    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.4.2'
+    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.5.2'
     implementation "co.aikar:acf-paper:0.5.1-SNAPSHOT"
     implementation 'com.google.code.gson:gson:2.8.9'
     implementation 'io.papermc:paperlib:1.0.7'
