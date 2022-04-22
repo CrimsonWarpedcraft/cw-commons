@@ -91,31 +91,3 @@ jobs:
           asset_path: ${{ github.workspace }}/build/libs/CwCommons.jar
           asset_name: CwCommons.jar
           asset_content_type: application/java-archive
-
-  bump-version:
-    needs: release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Bump project version
-        run: |
-          cat ${{ github.workspace }}/version.txt \
-          | awk -F. -v OFS=. 'BEGIN { ORS="" }; NF==1{print ++$NF}; NF>1{$NF=sprintf("%0*d", \
-          length ($NF), ($NF+1)); print}' \
-          | tee ${{ github.workspace }}/version.txt
-
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
-        with:
-          assignees: leviem1
-          base: main
-          body: Bumps the project's Gradle version in version.txt
-          branch: bump-version
-          committer: Levi Muniz <levi.muniz17@gmail.com>
-          commit-message: Bump project version
-          delete-branch: true
-          labels: enhancement, low priority
-          title: Bump project version
-          token: ${{ secrets.PR_PAT }}

@@ -18,23 +18,16 @@ static def getTime() {
 
 // Load version from string
 String shortVersion = null
-try {
-    shortVersion = rootProject.file('version.txt').getText('UTF-8').trim()
-} catch (FileNotFoundException ignored) {
-}
-
-// If no version file found or was empty, use blank string
-if (shortVersion == null || shortVersion == "") {
-    shortVersion = getTime()
-}
-
-// Set version to version property if supplied
 if (hasProperty('ver')) {
     if (ver.charAt(0) == "v") {
         shortVersion = ver.substring(1)
     } else {
         shortVersion = ver
     }
+}
+
+if (shortVersion == null || shortVersion == "") {
+    shortVersion = getTime()
 }
 
 // Add snapshot identifier to version

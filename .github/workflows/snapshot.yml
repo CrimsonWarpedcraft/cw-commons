@@ -57,7 +57,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Publish with Gradle
-        run: ./gradlew publish --info
+        run: ./gradlew -Pver=0.0.0 publish --info
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
