@@ -40,19 +40,36 @@ java {
 
 repositories {
     maven {
-        url 'https://mvn.snowypeaksystems.com/repository/maven-public/'
+        name 'papermc'
+        url 'https://papermc.io/repo/repository/maven-public/'
+        content {
+            includeModule("io.papermc.paper", "paper-api")
+            includeModule("io.papermc", "paperlib")
+            includeModule("net.md-5", "bungeecord-chat")
+        }
     }
+
+    maven {
+        name 'aikar'
+        url 'https://repo.aikar.co/content/groups/aikar/'
+        content {
+            includeModule("co.aikar", "acf-paper")
+            includeModule("co.aikar", "acf-parent")
+        }
+    }
+
+    mavenCentral()
 }
 
 dependencies {
-    compileOnly 'com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT'
+    compileOnly 'io.papermc.paper:paper-api:1.18.2-R0.1-SNAPSHOT'
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.6.0'
     implementation "co.aikar:acf-paper:0.5.1-SNAPSHOT"
     implementation 'com.google.code.gson:gson:2.9.0'
     implementation 'io.papermc:paperlib:1.0.7'
     spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.12.0'
     testCompileOnly 'com.github.spotbugs:spotbugs-annotations:4.6.0'
-    testImplementation 'com.destroystokyo.paper:paper-api:1.16.5-R0.1-SNAPSHOT'
+    testImplementation 'io.papermc.paper:paper-api:1.18.2-R0.1-SNAPSHOT'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
 }

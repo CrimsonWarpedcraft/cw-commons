@@ -98,7 +98,7 @@ public class MockPlayerInventory implements PlayerInventory {
   }
 
   @Override
-  public void setContents(@NotNull ItemStack[] items) throws IllegalArgumentException {
+  public void setContents(ItemStack @NotNull [] items) throws IllegalArgumentException {
 
   }
 
@@ -108,7 +108,7 @@ public class MockPlayerInventory implements PlayerInventory {
   }
 
   @Override
-  public void setStorageContents(@NotNull ItemStack[] items) throws IllegalArgumentException {
+  public void setStorageContents(ItemStack @NotNull [] items) throws IllegalArgumentException {
 
   }
 
@@ -219,7 +219,7 @@ public class MockPlayerInventory implements PlayerInventory {
   }
 
   @Override
-  public @Nullable ItemStack getItem(@NotNull EquipmentSlot slot) {
+  public @NotNull ItemStack getItem(@NotNull EquipmentSlot slot) {
     return null;
   }
 

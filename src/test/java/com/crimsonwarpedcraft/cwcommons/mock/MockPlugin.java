@@ -9,6 +9,7 @@ import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.generator.BiomeProvider;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
@@ -108,6 +109,14 @@ public class MockPlugin implements Plugin {
   @Override
   public @Nullable ChunkGenerator getDefaultWorldGenerator(@NotNull String worldName,
                                                            @Nullable String id) {
+    return null;
+  }
+
+  @Override
+  public @Nullable BiomeProvider getDefaultBiomeProvider(
+      @NotNull String worldName,
+      @Nullable String id
+  ) {
     return null;
   }
 

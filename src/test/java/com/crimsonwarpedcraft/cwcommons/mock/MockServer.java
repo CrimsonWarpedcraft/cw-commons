@@ -32,6 +32,7 @@ import org.bukkit.Tag;
 import org.bukkit.UnsafeValues;
 import org.bukkit.Warning;
 import org.bukkit.World;
+import org.bukkit.WorldBorder;
 import org.bukkit.WorldCreator;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.block.data.BlockData;
@@ -47,6 +48,7 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.SpawnCategory;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.help.HelpMap;
@@ -62,8 +64,10 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.ServicesManager;
 import org.bukkit.plugin.messaging.Messenger;
+import org.bukkit.potion.PotionBrewer;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scoreboard.ScoreboardManager;
+import org.bukkit.structure.StructureManager;
 import org.bukkit.util.CachedServerIcon;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +84,11 @@ public class MockServer implements Server {
   private final HashMap<String, World> worlds = new HashMap<>();
   private final List<Recipe> recipes = new LinkedList<>();
   private final PluginManager manager = new MockPluginManager();
+
+  @Override
+  public @NotNull File getPluginsFolder() {
+    return null;
+  }
 
   @Override
   public @NotNull String getName() {
@@ -131,6 +140,11 @@ public class MockServer implements Server {
   }
 
   @Override
+  public int getSimulationDistance() {
+    return 0;
+  }
+
+  @Override
   public @NotNull String getIp() {
     return null;
   }
@@ -161,12 +175,42 @@ public class MockServer implements Server {
   }
 
   @Override
+  public @NotNull String getResourcePack() {
+    return null;
+  }
+
+  @Override
+  public @NotNull String getResourcePackHash() {
+    return null;
+  }
+
+  @Override
+  public @NotNull String getResourcePackPrompt() {
+    return null;
+  }
+
+  @Override
+  public boolean isResourcePackRequired() {
+    return false;
+  }
+
+  @Override
   public boolean hasWhitelist() {
     return false;
   }
 
   @Override
   public void setWhitelist(boolean value) {
+
+  }
+
+  @Override
+  public boolean isWhitelistEnforced() {
+    return false;
+  }
+
+  @Override
+  public void setWhitelistEnforced(boolean value) {
 
   }
 
@@ -221,7 +265,17 @@ public class MockServer implements Server {
   }
 
   @Override
+  public int getTicksPerWaterUndergroundCreatureSpawns() {
+    return 0;
+  }
+
+  @Override
   public int getTicksPerAmbientSpawns() {
+    return 0;
+  }
+
+  @Override
+  public int getTicksPerSpawns(@NotNull SpawnCategory spawnCategory) {
     return 0;
   }
 
@@ -305,6 +359,11 @@ public class MockServer implements Server {
   }
 
   @Override
+  public @NotNull WorldBorder createWorldBorder() {
+    return null;
+  }
+
+  @Override
   public @Nullable MapView getMap(int id) {
     return null;
   }
@@ -377,6 +436,23 @@ public class MockServer implements Server {
   }
 
   @Override
+  public @Nullable Recipe getCraftingRecipe(
+      @NotNull ItemStack[] craftingMatrix,
+      @NotNull World world
+  ) {
+    return null;
+  }
+
+  @Override
+  public @NotNull ItemStack craftItem(
+      @NotNull ItemStack[] craftingMatrix,
+      @NotNull World world,
+      @NotNull Player player
+  ) {
+    return null;
+  }
+
+  @Override
   public @NotNull Iterator<Recipe> recipeIterator() {
     // Return a copy of recipes so it's effectively immutable
     return new LinkedList<>(recipes).listIterator();
@@ -414,6 +490,11 @@ public class MockServer implements Server {
   @Override
   public void setSpawnRadius(int value) {
 
+  }
+
+  @Override
+  public boolean getHideOnlinePlayers() {
+    return false;
   }
 
   @Override
@@ -458,6 +539,24 @@ public class MockServer implements Server {
 
   @Override
   public @NotNull OfflinePlayer getOfflinePlayer(@NotNull UUID id) {
+    return null;
+  }
+
+  @Override
+  public org.bukkit.profile.@NotNull PlayerProfile createPlayerProfile(
+      @Nullable UUID uniqueId,
+      @Nullable String name
+  ) {
+    return null;
+  }
+
+  @Override
+  public org.bukkit.profile.@NotNull PlayerProfile createPlayerProfile(@NotNull UUID uniqueId) {
+    return null;
+  }
+
+  @Override
+  public org.bukkit.profile.@NotNull PlayerProfile createPlayerProfile(@NotNull String name) {
     return null;
   }
 
@@ -508,6 +607,11 @@ public class MockServer implements Server {
 
   @Override
   public @NotNull ConsoleCommandSender getConsoleSender() {
+    return null;
+  }
+
+  @Override
+  public @NotNull CommandSender createCommandSender(@NotNull Consumer<? super Component> feedback) {
     return null;
   }
 
@@ -603,7 +707,17 @@ public class MockServer implements Server {
   }
 
   @Override
+  public int getWaterUndergroundCreatureSpawnLimit() {
+    return 0;
+  }
+
+  @Override
   public int getAmbientSpawnLimit() {
+    return 0;
+  }
+
+  @Override
+  public int getSpawnLimit(@NotNull SpawnCategory spawnCategory) {
     return 0;
   }
 
@@ -801,6 +915,11 @@ public class MockServer implements Server {
   }
 
   @Override
+  public @NotNull StructureManager getStructureManager() {
+    return null;
+  }
+
+  @Override
   public @NotNull UnsafeValues getUnsafe() {
     return null;
   }
@@ -862,6 +981,11 @@ public class MockServer implements Server {
 
   @Override
   public @NotNull DatapackManager getDatapackManager() {
+    return null;
+  }
+
+  @Override
+  public @NotNull PotionBrewer getPotionBrewer() {
     return null;
   }
 

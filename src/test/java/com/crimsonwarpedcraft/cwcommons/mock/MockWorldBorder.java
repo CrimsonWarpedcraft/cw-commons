@@ -2,8 +2,10 @@ package com.crimsonwarpedcraft.cwcommons.mock;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.WorldBorder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Mock object for WorldBorders.
@@ -14,6 +16,11 @@ import org.jetbrains.annotations.NotNull;
 public class MockWorldBorder implements WorldBorder {
   private volatile double size = 0;
   private long resizeDuration = 0;
+
+  @Override
+  public @Nullable World getWorld() {
+    return null;
+  }
 
   @Override
   public void reset() {

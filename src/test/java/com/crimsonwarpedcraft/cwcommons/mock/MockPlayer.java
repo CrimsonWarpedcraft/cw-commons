@@ -34,6 +34,7 @@ import org.bukkit.SoundCategory;
 import org.bukkit.Statistic;
 import org.bukkit.WeatherType;
 import org.bukkit.World;
+import org.bukkit.WorldBorder;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.attribute.Attribute;
@@ -50,9 +51,11 @@ import org.bukkit.entity.EntityCategory;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Pose;
 import org.bukkit.entity.Projectile;
+import org.bukkit.entity.SpawnCategory;
 import org.bukkit.entity.Villager;
 import org.bukkit.entity.memory.MemoryKey;
 import org.bukkit.event.entity.CreatureSpawnEvent;
@@ -389,6 +392,46 @@ public class MockPlayer implements Player {
   }
 
   @Override
+  public void setVisualFire(boolean fire) {
+
+  }
+
+  @Override
+  public boolean isVisualFire() {
+    return false;
+  }
+
+  @Override
+  public int getFreezeTicks() {
+    return 0;
+  }
+
+  @Override
+  public int getMaxFreezeTicks() {
+    return 0;
+  }
+
+  @Override
+  public void setFreezeTicks(int ticks) {
+
+  }
+
+  @Override
+  public boolean isFrozen() {
+    return false;
+  }
+
+  @Override
+  public boolean isFreezeTickingLocked() {
+    return false;
+  }
+
+  @Override
+  public void lockFreezeTicks(boolean locked) {
+
+  }
+
+  @Override
   public void remove() {
 
   }
@@ -622,6 +665,11 @@ public class MockPlayer implements Player {
 
   @Override
   public @NotNull Pose getPose() {
+    return null;
+  }
+
+  @Override
+  public @NotNull SpawnCategory getSpawnCategory() {
     return null;
   }
 
@@ -886,6 +934,22 @@ public class MockPlayer implements Player {
   }
 
   @Override
+  public void playSound(@NotNull Entity entity, @NotNull Sound sound, float volume, float pitch) {
+
+  }
+
+  @Override
+  public void playSound(
+      @NotNull Entity entity,
+      @NotNull Sound sound,
+      @NotNull SoundCategory category,
+      float volume,
+      float pitch
+  ) {
+
+  }
+
+  @Override
   public void stopSound(@NotNull Sound sound) {
 
   }
@@ -906,6 +970,11 @@ public class MockPlayer implements Player {
   }
 
   @Override
+  public void stopAllSounds() {
+
+  }
+
+  @Override
   public void playEffect(@NotNull EntityEffect type) {
 
   }
@@ -918,6 +987,11 @@ public class MockPlayer implements Player {
   @Override
   public <T> void playEffect(@NotNull Location loc, @NotNull Effect effect, @Nullable T data) {
 
+  }
+
+  @Override
+  public boolean breakBlock(@NotNull Block block) {
+    return false;
   }
 
   @Override
@@ -936,12 +1010,20 @@ public class MockPlayer implements Player {
   }
 
   @Override
-  public boolean sendChunkChange(@NotNull Location loc,
-                                 int sx,
-                                 int sy,
-                                 int sz,
-                                 @NotNull byte[] data) {
-    return false;
+  public void sendMultiBlockChange(
+      @NotNull Map<Location, BlockData> blockChanges,
+      boolean suppressLightUpdates
+  ) {
+
+  }
+
+  @Override
+  public void sendEquipmentChange(
+      @NotNull LivingEntity entity,
+      @NotNull EquipmentSlot slot,
+      @NotNull ItemStack item
+  ) {
+
   }
 
   @Override
@@ -958,6 +1040,16 @@ public class MockPlayer implements Player {
   }
 
   @Override
+  public void sendSignChange(
+      @NotNull Location loc,
+      @Nullable List<Component> lines,
+      @NotNull DyeColor dyeColor,
+      boolean hasGlowingText
+  ) throws IllegalArgumentException {
+
+  }
+
+  @Override
   public void sendSignChange(@NotNull Location loc, @Nullable String[] lines)
       throws IllegalArgumentException {
 
@@ -967,6 +1059,16 @@ public class MockPlayer implements Player {
   public void sendSignChange(@NotNull Location loc,
                              @Nullable String[] lines,
                              @NotNull DyeColor dyeColor) throws IllegalArgumentException {
+
+  }
+
+  @Override
+  public void sendSignChange(
+      @NotNull Location loc,
+      @Nullable String[] lines,
+      @NotNull DyeColor dyeColor,
+      boolean hasGlowingText
+  ) throws IllegalArgumentException {
 
   }
 
@@ -1064,6 +1166,11 @@ public class MockPlayer implements Player {
   @Override
   public void updateInventory() {
 
+  }
+
+  @Override
+  public @Nullable GameMode getPreviousGameMode() {
+    return null;
   }
 
   @Override
@@ -1196,6 +1303,22 @@ public class MockPlayer implements Player {
     return false;
   }
 
+
+  @Override
+  public boolean canSee(@NotNull Entity entity) {
+    return false;
+  }
+
+  @Override
+  public void hideEntity(@NotNull Plugin plugin, @NotNull Entity entity) {
+
+  }
+
+  @Override
+  public void showEntity(@NotNull Plugin plugin, @NotNull Entity entity) {
+
+  }
+
   @Override
   public boolean isFlying() {
     return false;
@@ -1237,12 +1360,57 @@ public class MockPlayer implements Player {
   }
 
   @Override
+  public void setResourcePack(@NotNull String url, @NotNull String hash, boolean required) {
+
+  }
+
+  @Override
+  public void setResourcePack(
+      @NotNull String url,
+      @NotNull String hash,
+      boolean required,
+      @Nullable Component resourcePackPrompt
+  ) {
+
+  }
+
+  @Override
   public void setResourcePack(@NotNull String url) {
 
   }
 
   @Override
-  public void setResourcePack(@NotNull String url, @NotNull byte[] hash) {
+  public void setResourcePack(@NotNull String url, byte @NotNull [] hash) {
+
+  }
+
+  @Override
+  public void setResourcePack(@NotNull String url, @Nullable byte[] hash, @Nullable String prompt) {
+
+  }
+
+  @Override
+  public void setResourcePack(@NotNull String url, @Nullable byte[] hash, boolean force) {
+
+  }
+
+  @Override
+  public void setResourcePack(
+      @NotNull String url,
+      @Nullable byte[] hash,
+      @Nullable String prompt,
+      boolean force
+  ) {
+
+  }
+
+  @Override
+  public void setResourcePack(
+      @NotNull String url,
+      byte @Nullable [] hash,
+      @Nullable Component prompt,
+      boolean force
+  ) {
 
   }
 
@@ -1255,6 +1423,16 @@ public class MockPlayer implements Player {
   public void setScoreboard(@NotNull Scoreboard scoreboard)
       throws IllegalArgumentException, IllegalStateException {
     this.scoreboard = scoreboard;
+  }
+
+  @Override
+  public @Nullable WorldBorder getWorldBorder() {
+    return null;
+  }
+
+  @Override
+  public void setWorldBorder(@Nullable WorldBorder border) {
+
   }
 
   @Override
@@ -1275,6 +1453,16 @@ public class MockPlayer implements Player {
   @Override
   public double getHealthScale() {
     return 0;
+  }
+
+  @Override
+  public void sendHealthUpdate(double health, int foodLevel, float saturationLevel) {
+
+  }
+
+  @Override
+  public void sendHealthUpdate() {
+
   }
 
   @Override
@@ -1481,6 +1669,36 @@ public class MockPlayer implements Player {
   }
 
   @Override
+  public int getSimulationDistance() {
+    return 0;
+  }
+
+  @Override
+  public void setSimulationDistance(int simulationDistance) {
+
+  }
+
+  @Override
+  public int getNoTickViewDistance() {
+    return 0;
+  }
+
+  @Override
+  public void setNoTickViewDistance(int viewDistance) {
+
+  }
+
+  @Override
+  public int getSendViewDistance() {
+    return 0;
+  }
+
+  @Override
+  public void setSendViewDistance(int viewDistance) {
+
+  }
+
+  @Override
   public void updateCommands() {
 
   }
@@ -1551,12 +1769,35 @@ public class MockPlayer implements Player {
   }
 
   @Override
+  public boolean spawnAt(
+      @NotNull Location location,
+      CreatureSpawnEvent.@NotNull SpawnReason reason
+  ) {
+    return false;
+  }
+
+  @Override
+  public boolean isInPowderedSnow() {
+    return false;
+  }
+
+  @Override
   public @Nullable String getClientBrandName() {
     return null;
   }
 
   @Override
   public @NotNull Spigot spigot() {
+    return null;
+  }
+
+  @Override
+  public @NotNull Component name() {
+    return null;
+  }
+
+  @Override
+  public @NotNull Component teamDisplayName() {
     return null;
   }
 
@@ -1927,6 +2168,26 @@ public class MockPlayer implements Player {
   }
 
   @Override
+  public int getBeeStingerCooldown() {
+    return 0;
+  }
+
+  @Override
+  public void setBeeStingerCooldown(int ticks) {
+
+  }
+
+  @Override
+  public int getBeeStingersInBody() {
+    return 0;
+  }
+
+  @Override
+  public void setBeeStingersInBody(int count) {
+
+  }
+
+  @Override
   public int getMaximumNoDamageTicks() {
     return 0;
   }
@@ -2084,6 +2345,11 @@ public class MockPlayer implements Player {
   }
 
   @Override
+  public boolean isClimbing() {
+    return false;
+  }
+
+  @Override
   public void setAI(boolean ai) {
 
   }
@@ -2194,6 +2460,11 @@ public class MockPlayer implements Player {
   }
 
   @Override
+  public @Nullable ItemStack getItemInUse() {
+    return null;
+  }
+
+  @Override
   public @NotNull EquipmentSlot getHandRaised() {
     return null;
   }
@@ -2296,6 +2567,16 @@ public class MockPlayer implements Player {
   @Override
   public void openSign(@NotNull Sign sign) {
 
+  }
+
+  @Override
+  public void showDemoScreen() {
+
+  }
+
+  @Override
+  public boolean isAllowingServerListings() {
+    return false;
   }
 
   @Override
