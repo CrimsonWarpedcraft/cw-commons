@@ -965,6 +965,11 @@ public class MockServer implements Server {
   }
 
   @Override
+  public @NotNull PlayerProfile createProfileExact(@Nullable UUID uuid, @Nullable String name) {
+    return null;
+  }
+
+  @Override
   public int getCurrentTick() {
     return 0;
   }
