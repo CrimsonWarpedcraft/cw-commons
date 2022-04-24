@@ -32,7 +32,6 @@ import org.bukkit.Tag;
 import org.bukkit.UnsafeValues;
 import org.bukkit.Warning;
 import org.bukkit.World;
-import org.bukkit.WorldBorder;
 import org.bukkit.WorldCreator;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.block.data.BlockData;
@@ -355,11 +354,6 @@ public class MockServer implements Server {
 
   @Override
   public @Nullable World getWorld(@NotNull NamespacedKey worldKey) {
-    return null;
-  }
-
-  @Override
-  public @NotNull WorldBorder createWorldBorder() {
     return null;
   }
 
@@ -961,11 +955,6 @@ public class MockServer implements Server {
 
   @Override
   public @NotNull PlayerProfile createProfile(@Nullable UUID uuid, @Nullable String name) {
-    return null;
-  }
-
-  @Override
-  public @NotNull PlayerProfile createProfileExact(@Nullable UUID uuid, @Nullable String name) {
     return null;
   }
 

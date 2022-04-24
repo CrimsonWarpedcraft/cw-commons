@@ -34,7 +34,6 @@ import org.bukkit.SoundCategory;
 import org.bukkit.Statistic;
 import org.bukkit.WeatherType;
 import org.bukkit.World;
-import org.bukkit.WorldBorder;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.attribute.Attribute;
@@ -1423,16 +1422,6 @@ public class MockPlayer implements Player {
   public void setScoreboard(@NotNull Scoreboard scoreboard)
       throws IllegalArgumentException, IllegalStateException {
     this.scoreboard = scoreboard;
-  }
-
-  @Override
-  public @Nullable WorldBorder getWorldBorder() {
-    return null;
-  }
-
-  @Override
-  public void setWorldBorder(@Nullable WorldBorder border) {
-
   }
 
   @Override

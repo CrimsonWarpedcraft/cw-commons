@@ -889,11 +889,6 @@ public class MockWorld implements World {
   }
 
   @Override
-  public @NotNull Biome getComputedBiome(int x, int y, int z) {
-    return null;
-  }
-
-  @Override
   public void setBiome(@NotNull Location location, @NotNull Biome biome) {
 
   }
