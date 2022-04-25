@@ -50,11 +50,11 @@ repositories {
     }
 
     maven {
-        name 'aikar'
-        url 'https://repo.aikar.co/content/groups/aikar/'
+        name 'command-api'
+        url "https://repo.codemc.org/repository/maven-public/"
         content {
-            includeModule("co.aikar", "acf-paper")
-            includeModule("co.aikar", "acf-parent")
+            includeModule("dev.jorel", "commandapi-core")
+            includeModule("dev.jorel", "commandapi-annotations")
         }
     }
 
@@ -62,9 +62,11 @@ repositories {
 }
 
 dependencies {
+    annotationProcessor 'dev.jorel:commandapi-annotations:7.0.0'
+    compileOnly 'dev.jorel:commandapi-annotations:7.0.0'
+    compileOnly 'dev.jorel:commandapi-core:7.0.0'
     compileOnly 'io.papermc.paper:paper-api:1.18.1-R0.1-SNAPSHOT'
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.6.0'
-    implementation "co.aikar:acf-paper:0.5.1-SNAPSHOT"
     implementation 'com.google.code.gson:gson:2.9.0'
     implementation 'io.papermc:paperlib:1.0.7'
     spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.12.0'
@@ -113,6 +115,8 @@ spotbugsTest {
 shadowJar {
     archiveClassifier.set('')
     relocate 'io.papermc.lib', 'shadow.io.papermc.paperlib'
+    relocate 'dev.jorel.commandapi-core', 'shadow.dev.jorel.commandapi-core'
+    relocate 'dev.jorel.commandapi-annotations', 'shadow.dev.jorel.commandapi-annotations'
     minimize()
 }
 
