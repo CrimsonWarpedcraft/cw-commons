@@ -54,10 +54,10 @@ public class CommandRegister {
 
   /** Unregisters all registered commands. */
   public CommandRegister unregisterAll() {
-    CommandRegister register = this;
+    CommandRegister register = new CommandRegister(commands);
 
-    for (Class<? extends BaseCommand> command : commands) {
-      register = unregister(command);
+    while (!register.commands.isEmpty()) {
+      register = unregister(register.commands.get(0));
     }
 
     return register;
