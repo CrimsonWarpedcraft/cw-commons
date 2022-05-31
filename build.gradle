@@ -40,16 +40,21 @@ java {
 
 repositories {
     maven {
-        name 'papermc'
-        url 'https://repo.papermc.io/repository/maven-public/'
-        content {
-            includeModule("io.papermc.paper", "paper-api")
-            includeModule("io.papermc", "paperlib")
-            includeModule("net.md-5", "bungeecord-chat")
-        }
+        name 'sps'
+        url 'https://mvn.snowypeaksystems.com/repository/maven-public/'
     }
 
     mavenCentral()
+
+    maven {
+        name 'papermc'
+        url 'https://repo.papermc.io/repository/maven-public/'
+        content {
+            includeGroup 'io.papermc'
+            includeGroup 'io.papermc.paper'
+            includeGroup 'net.md-5'
+        }
+    }
 }
 
 dependencies {
