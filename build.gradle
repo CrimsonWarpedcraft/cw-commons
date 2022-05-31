@@ -49,20 +49,10 @@ repositories {
         }
     }
 
-    maven {
-        name 'command-api'
-        url "https://repo.codemc.org/repository/maven-public/"
-        content {
-            includeModule("dev.jorel", "commandapi-core")
-            includeModule("dev.jorel", "commandapi-annotations")
-        }
-    }
-
     mavenCentral()
 }
 
 dependencies {
-    annotationProcessor 'dev.jorel:commandapi-annotations:8.1.0'
     compileOnly 'dev.jorel:commandapi-annotations:8.1.0'
     compileOnly 'dev.jorel:commandapi-core:8.1.0'
     compileOnly 'io.papermc.paper:paper-api:1.18.1-R0.1-SNAPSHOT'
@@ -114,9 +104,13 @@ spotbugsTest {
 
 shadowJar {
     archiveClassifier.set('')
+
+    dependencies {
+        include dependency('dev.jorel:commandapi-shade:8.1.0')
+    }
+
     relocate 'io.papermc.lib', 'shadow.io.papermc.paperlib'
-    relocate 'dev.jorel.commandapi-core', 'shadow.dev.jorel.commandapi-core'
-    relocate 'dev.jorel.commandapi-annotations', 'shadow.dev.jorel.commandapi-annotations'
+
     minimize()
 }
 
