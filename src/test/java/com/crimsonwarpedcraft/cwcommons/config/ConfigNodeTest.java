@@ -2,6 +2,7 @@ package com.crimsonwarpedcraft.cwcommons.config;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -40,7 +41,7 @@ class ConfigNodeTest {
   }
 
   @Test
-  void getValue_returns_default_value() {
+  void getValue_returns_default_value_if_unset() {
     ConfigNode<String> node = ConfigNode.getNewConfigNode(
         "test1",
         String.class,
@@ -48,6 +49,32 @@ class ConfigNodeTest {
         v -> {}
     );
     assertEquals("test2", node.getValue());
+  }
+
+  @Test
+  void getValue_does_not_return_default_value_if_set() {
+    ConfigNode<String> node = ConfigNode.getNewConfigNode(
+        "test1",
+        String.class,
+        "test2",
+        v -> {}
+    );
+
+    assertDoesNotThrow(() -> node.setValue("test3"));
+    assertEquals("test3", node.getValue());
+  }
+
+  @Test
+  void getValue_does_not_return_default_value_if_set_to_null() {
+    ConfigNode<String> node = ConfigNode.getNewConfigNode(
+        "test1",
+        String.class,
+        "test2",
+        v -> {}
+    );
+
+    assertDoesNotThrow(() -> node.setValue(null));
+    assertNull(node.getValue());
   }
 
   @Test
