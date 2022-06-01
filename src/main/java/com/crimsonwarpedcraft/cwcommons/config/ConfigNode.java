@@ -99,9 +99,7 @@ public class ConfigNode<T> {
    * @throws ConfigurationException if the value is invalid
    */
   public void setValue(Object value) throws ConfigurationException {
-    Objects.requireNonNull(value);
-
-    if (!cls.isAssignableFrom(value.getClass())) {
+    if (value != null && !cls.isAssignableFrom(value.getClass())) {
       throw new ConfigurationException(
           String.format(
               "Expected config value for %s to be %s. Found %s.",
