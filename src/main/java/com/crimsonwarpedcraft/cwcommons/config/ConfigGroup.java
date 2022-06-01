@@ -125,6 +125,8 @@ public class ConfigGroup {
   public void setValue(Map<String, Object> value) throws ConfigurationException {
     Objects.requireNonNull(value);
 
+    Map<String, ConfigNode<?>> newNodes = new HashMap<>();
+
     for (Entry<String, Object> data : value.entrySet()) {
       ConfigGroup group = groups.get(data.getKey());
       ConfigNode<?> node = nodes.get(data.getKey());
@@ -139,11 +141,14 @@ public class ConfigGroup {
 
       // Set the value of the node if exists
       } else if (node != null) {
-        node.setValue(data.getValue());
+        newNodes.put(node.getName(), node.setValue(data.getValue()));
       }
 
       // Do nothing if the value is not expected in case of deprecated nodes
     }
+
+    this.nodes.clear();
+    this.nodes.putAll(newNodes);
   }
 
   /** Returns a Map representing all the values in this group. */

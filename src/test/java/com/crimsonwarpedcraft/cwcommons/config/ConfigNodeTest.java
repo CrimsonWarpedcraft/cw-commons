@@ -2,6 +2,7 @@ package com.crimsonwarpedcraft.cwcommons.config;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -52,7 +53,7 @@ class ConfigNodeTest {
   }
 
   @Test
-  void getValue_does_not_return_default_value_if_set() {
+  void getValue_does_not_return_default_value_if_set() throws ConfigurationException {
     ConfigNode<String> node = ConfigNode.getNewConfigNode(
         "test1",
         String.class,
@@ -60,12 +61,12 @@ class ConfigNodeTest {
         v -> {}
     );
 
-    assertDoesNotThrow(() -> node.setValue("test3"));
+    node = node.setValue("test3");
     assertEquals("test3", node.getValue());
   }
 
   @Test
-  void getValue_does_not_return_default_value_if_set_to_null() {
+  void getValue_does_not_return_default_value_if_set_to_null() throws ConfigurationException {
     ConfigNode<String> node = ConfigNode.getNewConfigNode(
         "test1",
         String.class,
@@ -73,12 +74,12 @@ class ConfigNodeTest {
         v -> {}
     );
 
-    assertDoesNotThrow(() -> node.setValue(null));
+    node = node.setValue(null);
     assertNull(node.getValue());
   }
 
   @Test
-  void setValue_sets_valid_value() {
+  void setValue_sets_valid_value() throws ConfigurationException {
     ConfigNode<String> node = ConfigNode.getNewConfigNode(
         "test1",
         String.class,
@@ -86,12 +87,12 @@ class ConfigNodeTest {
         v -> {}
     );
 
-    assertDoesNotThrow(() -> node.setValue("test3"));
+    node = node.setValue("test3");
     assertEquals("test3", node.getValue());
   }
 
   @Test
-  void setValue_sets_valid_subtype_value() {
+  void setValue_sets_valid_subtype_value() throws ConfigurationException {
     List<String> defaultList = new LinkedList<>();
     ConfigNode<List> node = ConfigNode.getNewConfigNode(
         "test1",
@@ -101,7 +102,7 @@ class ConfigNodeTest {
     );
 
     ArrayList<String> list = new ArrayList<>();
-    assertDoesNotThrow(() -> node.setValue(list));
+    node = node.setValue(list);
     assertSame(list, node.getValue());
   }
 
@@ -140,5 +141,16 @@ class ConfigNodeTest {
     );
 
     assertThrows(ConfigurationException.class, () -> node.setValue(List.of()));
+  }
+
+  @Test
+  void setValue_returns_new_instance() throws ConfigurationException {
+    ConfigNode<String> node = ConfigNode.getNewConfigNode(
+        "test1",
+        String.class,
+        v -> {}
+    );
+    
+    assertNotSame(node, node.setValue(null));
   }
 }

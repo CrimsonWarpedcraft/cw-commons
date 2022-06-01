@@ -9,11 +9,9 @@ import java.util.Objects;
  */
 public class ConfigNode<T> {
   private final ValidityChecker<T> validityChecker;
-  private final T defaultValue;
   private final String name;
   private final Class<T> cls;
-  private boolean wasSet = false;
-  private T value;
+  private final T value;
 
   /**
    * Get a new instance of a config node.
@@ -54,7 +52,7 @@ public class ConfigNode<T> {
   protected ConfigNode(
       String name,
       Class<T> cls,
-      T defaultValue,
+      T value,
       ValidityChecker<T> validityChecker
   ) {
     Objects.requireNonNull(cls);
@@ -62,8 +60,8 @@ public class ConfigNode<T> {
     Objects.requireNonNull(validityChecker);
 
     this.cls = cls;
-    this.defaultValue = defaultValue;
     this.name = name;
+    this.value = value;
     this.validityChecker = validityChecker;
   }
 
@@ -86,10 +84,6 @@ public class ConfigNode<T> {
    * @throws ClassCastException if the value cannot be cast to the desired type
    */
   public <U> U getValue() throws ClassCastException {
-    if (!wasSet) {
-      return (U) defaultValue;
-    }
-
     return (U) value;
   }
 
@@ -97,9 +91,10 @@ public class ConfigNode<T> {
    * Sets the value of this config node.
    *
    * @param value the value to set this config node to
+   * @return a new instance containing the set value
    * @throws ConfigurationException if the value is invalid
    */
-  public void setValue(Object value) throws ConfigurationException {
+  public ConfigNode<T> setValue(Object value) throws ConfigurationException {
     if (value != null && !cls.isAssignableFrom(value.getClass())) {
       throw new ConfigurationException(
           String.format(
@@ -111,7 +106,6 @@ public class ConfigNode<T> {
       );
     }
 
-    this.value = validate((T) value);
-    wasSet = true;
+    return new ConfigNode<>(name, cls, validate((T) value), validityChecker);
   }
 }
