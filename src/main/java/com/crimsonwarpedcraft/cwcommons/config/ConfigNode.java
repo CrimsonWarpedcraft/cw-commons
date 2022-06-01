@@ -12,6 +12,7 @@ public class ConfigNode<T> {
   private final T defaultValue;
   private final String name;
   private final Class<T> cls;
+  private boolean wasSet = false;
   private T value;
 
   /**
@@ -85,7 +86,7 @@ public class ConfigNode<T> {
    * @throws ClassCastException if the value cannot be cast to the desired type
    */
   public <U> U getValue() throws ClassCastException {
-    if (value == null) {
+    if (!wasSet) {
       return (U) defaultValue;
     }
 
@@ -111,5 +112,6 @@ public class ConfigNode<T> {
     }
 
     this.value = validate((T) value);
+    wasSet = true;
   }
 }
