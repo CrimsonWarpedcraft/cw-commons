@@ -65,7 +65,6 @@ class ConfigNodeTest {
 
   @Test
   void setValue_sets_valid_subtype_value() {
-
     List<String> defaultList = new LinkedList<>();
     ConfigNode<List> node = ConfigNode.getNewConfigNode(
         "test1",
@@ -77,6 +76,17 @@ class ConfigNodeTest {
     ArrayList<String> list = new ArrayList<>();
     assertDoesNotThrow(() -> node.setValue(list));
     assertSame(list, node.getValue());
+  }
+
+  @Test
+  void setValue_allows_null_inputs() {
+    ConfigNode<String> node = ConfigNode.getNewConfigNode(
+        "test1",
+        String.class,
+        v -> {}
+    );
+
+    assertDoesNotThrow(() -> node.setValue(null));
   }
 
   @Test
