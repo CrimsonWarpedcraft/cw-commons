@@ -237,17 +237,17 @@ class ConfigGroupTest {
   }
 
   @Test
-  void setValue_sets_node_value() {
+  void setValue_sets_node_value() throws ConfigurationException {
     ConfigGroup group = ConfigGroup.getNewConfigGroup("test1")
         .addConfigNode(ConfigNode.getNewConfigNode("test2", String.class, v -> {}));
     Map<String, Object> map = Map.of("test2", "test3");
 
-    assertDoesNotThrow(() -> group.setValue(map));
+    group = group.setValue(map);
     assertEquals("test3", group.getConfigNode("test2").getValue());
   }
 
   @Test
-  void setValue_sets_subgroup_node_value() {
+  void setValue_sets_subgroup_node_value() throws ConfigurationException {
     ConfigGroup group = ConfigGroup.getNewConfigGroup("test1")
         .addConfigGroup(
             ConfigGroup.getNewConfigGroup("test2")
@@ -257,7 +257,7 @@ class ConfigGroupTest {
         );
     Map<String, Object> map = Map.of("test2", Map.of("test3", "test4"));
 
-    assertDoesNotThrow(() -> group.setValue(map));
+    group = group.setValue(map);
     assertEquals(
         "test4",
         group.getConfigGroup("test2").getConfigNode("test3").getValue()

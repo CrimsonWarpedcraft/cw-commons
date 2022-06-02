@@ -51,7 +51,7 @@ class BukkitConfigTest {
     BukkitConfig config = new BukkitConfig(group, yaml);
 
     assertDoesNotThrow(() -> config.loadFromYamlFile(new File("")));
-    assertEquals("test3", group.getConfigNode("test2").getValue());
+    assertEquals("test3", config.getConfigGroup().getConfigNode("test2").getValue());
   }
 
   @Test
@@ -97,7 +97,8 @@ class BukkitConfigTest {
     assertDoesNotThrow(() -> config.loadFromYamlFile(new File("")));
     assertEquals(
         "test5",
-        group.getConfigGroup("test2")
+        config.getConfigGroup()
+            .getConfigGroup("test2")
             .getConfigGroup("test3")
             .getConfigNode("test4")
             .getValue()

@@ -16,7 +16,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */
 public class BukkitConfig {
-  private final ConfigGroup config;
+  private ConfigGroup config;
   private final YamlConfiguration yamlConfiguration;
 
   /** Returns a new instance of a bukkit config from the provided config group. */
@@ -57,7 +57,7 @@ public class BukkitConfig {
       );
     }
 
-    this.config.setValue(normalize(yamlConfiguration.getValues(false)));
+    config = config.setValue(normalize(yamlConfiguration.getValues(false)));
   }
 
   /**

@@ -120,11 +120,13 @@ public class ConfigGroup {
    * provided map.
    *
    * @param value map containing the values for the stored groups and nodes
+   * @return a new instance with the set values
    * @throws ConfigurationException if a value in the map is invalid
    */
-  public void setValue(Map<String, Object> value) throws ConfigurationException {
+  public ConfigGroup setValue(Map<String, Object> value) throws ConfigurationException {
     Objects.requireNonNull(value);
 
+    Map<String, ConfigGroup> newGroups = new HashMap<>();
     Map<String, ConfigNode<?>> newNodes = new HashMap<>();
 
     for (Entry<String, Object> data : value.entrySet()) {
@@ -137,7 +139,7 @@ public class ConfigGroup {
           throw new ConfigurationException("Value for group " + group.getName() + " is not a Map");
         }
 
-        group.setValue((Map<String, Object>) data.getValue());
+        newGroups.put(group.getName(), group.setValue((Map<String, Object>) data.getValue()));
 
       // Set the value of the node if exists
       } else if (node != null) {
@@ -147,8 +149,7 @@ public class ConfigGroup {
       // Do nothing if the value is not expected in case of deprecated nodes
     }
 
-    this.nodes.clear();
-    this.nodes.putAll(newNodes);
+    return new ConfigGroup(name, newGroups, newNodes);
   }
 
   /** Returns a Map representing all the values in this group. */
