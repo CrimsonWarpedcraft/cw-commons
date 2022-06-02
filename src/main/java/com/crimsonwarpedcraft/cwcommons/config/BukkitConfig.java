@@ -107,4 +107,8 @@ public class BukkitConfig {
         )
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
+
+  protected ConfigGroup getConfigGroup() {
+    return config;
+  }
 }
