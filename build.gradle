@@ -59,7 +59,7 @@ repositories {
 
 dependencies {
     compileOnly 'dev.jorel:commandapi-annotations:8.2.0'
-    compileOnly 'dev.jorel:commandapi-shade:8.2.1'
+    compileOnly 'dev.jorel:commandapi-shade:8.4.0'
     compileOnly 'io.papermc.paper:paper-api:1.18.1-R0.1-SNAPSHOT'
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.7.0'
     implementation 'com.google.code.gson:gson:2.9.0'
@@ -111,11 +111,11 @@ shadowJar {
     archiveClassifier.set('')
 
     dependencies {
-        include dependency('dev.jorel:commandapi-shade:8.2.1')
+        include dependency('dev.jorel:commandapi-shade:8.4.0')
     }
 
-    relocate 'dev.jorel.commandapi', 'shadow.dev.jorel'
-    relocate 'io.papermc.lib', 'shadow.io.papermc.lib'
+    relocate 'dev.jorel.commandapi', 'com.crimsonwarpedcraft.cwcommons.shadow.dev.jorel'
+    relocate 'io.papermc.lib', 'com.crimsonwarpedcraft.cwcommons.shadow.io.papermc.lib'
 
     minimize()
 }
