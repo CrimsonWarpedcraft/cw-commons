@@ -58,7 +58,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'dev.jorel:commandapi-annotations:8.4.1'
+    compileOnly 'dev.jorel:commandapi-annotations:8.5.0'
     compileOnly 'dev.jorel:commandapi-shade:8.4.1'
     compileOnly 'io.papermc.paper:paper-api:1.18.1-R0.1-SNAPSHOT'
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.7.1'
