@@ -1,9 +1,35 @@
 package com.crimsonwarpedcraft.cwcommons.command;
 
+import dev.jorel.commandapi.CommandAPICommand;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.Objects;
+
 /**
- * Interface for commands to register.
+ * Base class for plugin commands backed by a {@link CommandAPICommand}.
+ *
+ * <p>Extend this class and pass a fully-configured {@link CommandAPICommand} to the constructor.
+ * Call {@link #register()} in {@code onEnable()} to register the command with the server.
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */
-public interface BaseCommand {
+public class BaseCommand implements Command {
+
+  private final CommandAPICommand command;
+
+  /**
+   * Creates a {@link BaseCommand} backed by the given pre-built command tree.
+   *
+   * @param command the CommandAPICommand to register
+   */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+      justification = "CommandAPICommand cannot be defensively copied; caller owns it")
+  public BaseCommand(CommandAPICommand command) {
+    this.command = Objects.requireNonNull(command);
+  }
+
+  @Override
+  public BaseCommand register() {
+    command.register();
+    return this;
+  }
 }
