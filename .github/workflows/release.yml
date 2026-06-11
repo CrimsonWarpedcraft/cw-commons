@@ -1,93 +1,46 @@
-name: Publish Maven Release
+name: Notify on Release
+
+permissions:
+  contents: read
 
 on:
-  push:
-    tags:
-      - 'v*' # For v1.0, v0.1.0, etc
+  release:
+    types:
+    - published
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ ubuntu-latest, windows-latest ]
-        java: [ 17 ]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          java-version: ${{ matrix.java }}
-          distribution: 'zulu'
-
-      - name: Grant execute permission for gradlew
-        if: runner.os == 'Linux'
-        run: chmod +x gradlew
-
-      - name: Build with Gradle
-        run: ./gradlew build --info
-
-      - name: Upload build results
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.os }} Java ${{ matrix.java }} build results
-          path: ${{ github.workspace }}/build/
-
-  release:
-    needs: build
+  notify:
+    name: Send job complete notification
     runs-on: ubuntu-latest
-    env:
-      SPS_MVN_USER: ${{ secrets.SPS_MVN_USER }}
-      SPS_MVN_PASS: ${{ secrets.SPS_MVN_PASS }}
+    if: vars.DISCORD_RELEASE_WEBHOOK_ID || vars.DISCORD_WEBHOOK_ID
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
 
-      - name: Set up JDK
-        uses: actions/setup-java@v3
+      - name: Common Setup
+        uses: ./.github/actions/common-setup
+
+      - name: Retrieve Project Name
+        run: echo "PROJECT_NAME=$(${{github.workspace}}/gradlew -q printProjectName)" >> $GITHUB_ENV
+        id: project_name
+
+      - name: Set pre-release environment
+        if: ${{ github.event.release.prerelease }}
+        run: |
+          echo "RELEASE_TYPE=pre-release" >> $GITHUB_ENV
+
+      - name: Set release environment
+        if: ${{ !github.event.release.prerelease }}
+        run: |
+          echo "RELEASE_TYPE=release" >> $GITHUB_ENV
+
+      - name: Notify
+        uses: appleboy/discord-action@v1.2.0
         with:
-          java-version: 17
-          distribution: 'zulu'
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Publish with Gradle
-        run: ./gradlew -Pver=${GITHUB_REF/refs\/tags\//} release
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: Release Jar(s)
-          path: ${{ github.workspace }}/build/libs/
-
-      - name: Draft GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: true
-          body: |
-            # Recent Changes
-
-            ## Improvements 🏗️
-            * Item 1
-
-            ## Bug Fixes 🐞
-            * Item 2
-
-      - name: Upload GitHub Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ github.workspace }}/build/libs/CwCommons.jar
-          asset_name: CwCommons.jar
-          asset_content_type: application/java-archive
+          webhook_id: ${{ !github.event.release.prerelease && vars.DISCORD_RELEASE_WEBHOOK_ID || vars.DISCORD_WEBHOOK_ID }}
+          webhook_token: ${{ !github.event.release.prerelease && secrets.DISCORD_RELEASE_WEBHOOK_TOKEN || secrets.DISCORD_WEBHOOK_TOKEN }}
+          color: "#00FF00"
+          username: "${{ env.PROJECT_NAME }} Release Bot"
+          message: >
+            A ${{ env.PROJECT_NAME }} ${{ env.RELEASE_TYPE }} was published by ${{ github.actor }}:
+            https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}
