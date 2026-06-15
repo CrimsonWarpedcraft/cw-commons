@@ -7,10 +7,10 @@ The MongoDB driver is **not** bundled. Add it to your own plugin's dependencies.
 
 ## Build dependency
 
-```groovy
-// build.gradle
+```kotlin
+// build.gradle.kts
 dependencies {
-    implementation 'org.mongodb:mongodb-driver-sync:5.8.0'
+    implementation("org.mongodb:mongodb-driver-sync:5.8.0")
 }
 ```
 
