@@ -25,7 +25,7 @@ gradlew.bat build        # Windows
 
 ## Architecture
 
-Java 25, Gradle 9.5.1 (Kotlin DSL), distributed via JitPack as
+Java 25, Gradle 9.5.1 (Kotlin DSL, `java-library` plugin), distributed via JitPack as
 `com.github.CrimsonWarpedcraft:cw-commons:VERSION`.
 
 Three packages, each with its own responsibility:
@@ -78,17 +78,11 @@ interface. CommandAPI is `compileOnly` and is NOT shaded into the library JAR.
 
 ## Shadow JAR
 
-The final JAR shades and relocates:
+SQLite-JDBC is bundled in the shadow JAR but not relocated (native code requires stable paths).
 
-| Original prefix | Relocated prefix |
-|-----------------|-----------------|
-| `com.fasterxml` | `cwcommons.fasterxml` |
-| `org.yaml.snakeyaml` | `cwcommons.snakeyaml` |
-| `org.hibernate.validator` | `cwcommons.hibernatevalidator` |
-| `jakarta.validation` | `cwcommons.jakartavalidation` |
-| `org.jboss.logging` | `cwcommons.jbosslogging` |
-
-SQLite-JDBC is excluded from relocation (native code). Test code uses original package paths.
+Jackson, Hibernate Validator, and Jakarta Validation are declared as `api` deps — they are **not**
+bundled. Consumers receive them transitively via JitPack and should relocate them when shading their
+own plugin. Test code uses the original package paths.
 
 ## Checkstyle notes
 

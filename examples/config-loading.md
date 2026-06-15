@@ -58,5 +58,6 @@ PluginConfig cfg = new PluginConfig();
 new ConfigManager().validate(cfg); // throws IllegalStateException if invalid
 ```
 
-Jackson and Hibernate Validator are shaded into the library JAR and relocated, so they will not
-conflict with other plugins.
+Jackson, Hibernate Validator, and Jakarta Validation are provided as transitive dependencies. If
+you shade your plugin, include and relocate them under your own namespace to avoid conflicts with
+other plugins on the same server.

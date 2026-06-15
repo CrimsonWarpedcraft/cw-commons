@@ -3,7 +3,6 @@
 Shared library for CrimsonWarpedCraft Bukkit plugins. Provides reusable infrastructure for
 configuration loading and command registration.
 
-[![Test](https://github.com/CrimsonWarpedcraft/cw-commons/actions/workflows/pr.yml/badge.svg)](https://github.com/CrimsonWarpedcraft/cw-commons/actions/workflows/pr.yml)
 [![Test and Publish Snapshot](https://github.com/CrimsonWarpedcraft/cw-commons/actions/workflows/main.yml/badge.svg)](https://github.com/CrimsonWarpedcraft/cw-commons/actions/workflows/main.yml)
 
 ## Features
@@ -33,7 +32,9 @@ dependencies {
 Replace `VERSION` with a release tag (e.g. `v1.0.0`) or `main-SNAPSHOT` for the latest
 unreleased build from `main`.
 
-The library JAR already shades and relocates Jackson and Hibernate Validator. CommandAPI is not
+Jackson, Hibernate Validator, and Jakarta Validation are provided as transitive dependencies —
+no need to declare them separately. If you shade your plugin, include and relocate them under
+your own namespace to avoid conflicts with other plugins on the same server. CommandAPI is not
 included — shade it in your own plugin as you normally would, and it will be compatible with
 `BaseCommand`.
 
