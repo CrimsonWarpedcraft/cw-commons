@@ -1,3 +1,5 @@
-jdk:
-  - openjdk25
-build: ./gradlew -Pver=$VERSION build
+before_install:
+  - sdk install java 25.0.3-ms
+  - sdk use java 25.0.3-ms
+install:
+  - ./gradlew -Pver=$VERSION build
