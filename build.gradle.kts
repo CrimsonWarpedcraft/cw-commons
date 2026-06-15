@@ -8,7 +8,7 @@ plugins {
     checkstyle
     id("com.github.spotbugs") version "6.5.5"
     id("com.gradleup.shadow") version "9.4.2"
-    java
+    `java-library`
 }
 
 group = "com.crimsonwarpedcraft.cwcommons"
@@ -62,8 +62,8 @@ dependencies {
     compileOnly("dev.jorel:commandapi-paper-shade:11.2.0")
     compileOnly("com.github.spotbugs:spotbugs-annotations:4.10.2")
     compileOnly("org.mongodb:mongodb-driver-sync:5.8.0")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.0")
-    implementation("org.hibernate.validator:hibernate-validator:9.1.0.Final")
+    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.0")
+    api("org.hibernate.validator:hibernate-validator:9.1.0.Final")
     implementation("org.xerial:sqlite-jdbc:3.53.2.0")
     "spotbugsPlugins"("com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0")
     testCompileOnly("com.github.spotbugs:spotbugs-annotations:4.10.2")
@@ -112,19 +112,12 @@ tasks.withType<SpotBugsTask>().configureEach {
 tasks.named<ShadowJar>("shadowJar") {
     archiveClassifier.set("")
     mergeServiceFiles()
-    relocate("com.fasterxml", "com.crimsonwarpedcraft.cwcommons.fasterxml")
-    relocate("org.yaml.snakeyaml", "com.crimsonwarpedcraft.cwcommons.snakeyaml")
-    relocate("org.hibernate.validator", "com.crimsonwarpedcraft.cwcommons.hibernatevalidator")
-    relocate("jakarta.validation", "com.crimsonwarpedcraft.cwcommons.jakartavalidation")
-    relocate("org.jboss.logging", "com.crimsonwarpedcraft.cwcommons.jbosslogging")
+    exclude("com/fasterxml/**")
+    exclude("org/yaml/**")
+    exclude("org/hibernate/**")
+    exclude("jakarta/**")
+    exclude("org/jboss/**")
     minimize {
-        exclude(dependency("com.fasterxml.jackson.core:.*:.*"))
-        exclude(dependency("com.fasterxml.jackson.dataformat:.*:.*"))
-        exclude(dependency("com.fasterxml:classmate:.*"))
-        exclude(dependency("org.hibernate.validator:.*:.*"))
-        exclude(dependency("jakarta.validation:.*:.*"))
-        exclude(dependency("org.yaml:snakeyaml:.*"))
-        exclude(dependency("org.jboss.logging:.*:.*"))
         exclude(dependency("org.xerial:sqlite-jdbc:.*"))
     }
 }
