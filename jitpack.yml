@@ -1,3 +1,4 @@
 jdk:
   - openjdk25
-build: ./gradlew -Pver=$VERSION build
+install:
+  - ./gradlew -Pver=$VERSION build
