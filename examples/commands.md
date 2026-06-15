@@ -37,9 +37,9 @@ new GreetCommand().register();
 
 CommandAPI is `compileOnly` in cw-commons. Add it (shaded) to your own plugin:
 
-```groovy
-// build.gradle
+```kotlin
+// build.gradle.kts
 dependencies {
-    implementation 'dev.jorel:commandapi-bukkit-shade:11.2.0'
+    implementation("dev.jorel:commandapi-bukkit-shade:11.2.0")
 }
 ```

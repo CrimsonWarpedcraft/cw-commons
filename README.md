@@ -20,13 +20,13 @@ configuration loading and command registration.
 
 ## Adding as a dependency
 
-```groovy
+```kotlin
 repositories {
-    maven { url = 'https://jitpack.io' }
+    maven { url = uri("https://jitpack.io") }
 }
 
 dependencies {
-    implementation 'com.github.CrimsonWarpedcraft:cw-commons:VERSION'
+    implementation("com.github.CrimsonWarpedcraft:cw-commons:VERSION")
 }
 ```
 
