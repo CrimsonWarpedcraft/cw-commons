@@ -20,13 +20,13 @@ fun getTime(): String {
     return sdf.format(Date())
 }
 
-version = if (!hasProperty("ver")) {
+version = (if (!hasProperty("ver")) {
     "${getTime()}-SNAPSHOT"
 } else {
     val ver = property("ver") as String
     val base = if (ver.startsWith("v")) ver.drop(1) else ver.replace('/', '-')
     if (ver.startsWith("v") && !ver.contains("-rc-")) base else "$base-SNAPSHOT"
-}
+}).uppercase()
 
 java {
     sourceCompatibility = JavaVersion.VERSION_25
