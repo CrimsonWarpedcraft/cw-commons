@@ -24,8 +24,8 @@ version = if (!hasProperty("ver")) {
     "${getTime()}-SNAPSHOT"
 } else {
     val ver = property("ver") as String
-    if (ver.startsWith("v")) ver.drop(1)
-    else "${ver.replace('/', '-')}-SNAPSHOT"
+    val base = if (ver.startsWith("v")) ver.drop(1) else ver.replace('/', '-')
+    if (ver.startsWith("v") && !ver.contains("-rc-")) base else "$base-SNAPSHOT"
 }
 
 java {
