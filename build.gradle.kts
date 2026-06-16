@@ -9,6 +9,7 @@ plugins {
     id("com.github.spotbugs") version "6.5.5"
     id("com.gradleup.shadow") version "9.4.2"
     `java-library`
+    `maven-publish`
 }
 
 group = "com.crimsonwarpedcraft.cwcommons"
@@ -19,14 +20,13 @@ fun getTime(): String {
     return sdf.format(Date())
 }
 
-val shortVersion = if (hasProperty("ver")) {
-    val ver = property("ver") as String
-    if (ver.startsWith("v")) ver.drop(1) else ver
+version = if (!hasProperty("ver")) {
+    "${getTime()}-SNAPSHOT"
 } else {
-    ""
-}.ifBlank { getTime() }
-
-version = "$shortVersion-SNAPSHOT"
+    val ver = property("ver") as String
+    if (ver.startsWith("v")) ver.drop(1)
+    else "${ver.replace('/', '-')}-SNAPSHOT"
+}
 
 java {
     sourceCompatibility = JavaVersion.VERSION_25
@@ -130,26 +130,34 @@ tasks.assemble {
     dependsOn(tasks.named("shadowJar"))
 }
 
-tasks.register("configureRelease") {
-    doLast {
-        project.version = shortVersion
-    }
-}
-
-tasks.build {
-    mustRunAfter(tasks.named("configureRelease"))
-}
-
 tasks.register("printProjectName") {
     doLast { println(rootProject.name) }
 }
 
 tasks.register("release") {
-    dependsOn(tasks.named("configureRelease"))
     dependsOn(tasks.named("build"))
 
     doLast {
         tasks.named<ShadowJar>("shadowJar").get().archiveFile.get().asFile
             .renameTo(layout.buildDirectory.get().asFile.resolve("libs/${rootProject.name}.jar"))
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("shadow") {
+            artifactId = "cw-commons"
+            artifact(tasks.named<ShadowJar>("shadowJar"))
+            pom.withXml {
+                val deps = asNode().appendNode("dependencies")
+                configurations["api"].dependencies.forEach { dep ->
+                    val node = deps.appendNode("dependency")
+                    node.appendNode("groupId", dep.group)
+                    node.appendNode("artifactId", dep.name)
+                    node.appendNode("version", dep.version)
+                    node.appendNode("scope", "compile")
+                }
+            }
+        }
     }
 }
