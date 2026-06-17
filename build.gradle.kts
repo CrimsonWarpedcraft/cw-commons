@@ -82,7 +82,7 @@ tasks.test {
 }
 
 checkstyle {
-    toolVersion = "13.5.0"
+    toolVersion = "13.6.0"
     maxWarnings = 0
 }
 
