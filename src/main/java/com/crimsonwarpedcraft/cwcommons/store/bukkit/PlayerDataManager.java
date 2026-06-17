@@ -81,7 +81,8 @@ public final class PlayerDataManager<T> implements Listener {
    *
    * <p>Call this once in {@code onEnable()} after constructing the manager.
    */
-  public void registerEvents() {
+  public PlayerDataManager<T> registerEvents() {
     this.plugin.getServer().getPluginManager().registerEvents(this, this.plugin);
+    return this;
   }
 }

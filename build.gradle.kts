@@ -25,7 +25,7 @@ version = (if (!hasProperty("ver")) {
 } else {
     val ver = property("ver") as String
     val base = if (ver.startsWith("v")) ver.drop(1) else ver.replace('/', '-')
-    if (ver.startsWith("v") && !ver.contains("-rc-")) base else "$base-SNAPSHOT"
+    if (ver.startsWith("v") && !ver.lowercase().contains("-rc-")) base else "$base-SNAPSHOT"
 }).uppercase()
 
 java {
