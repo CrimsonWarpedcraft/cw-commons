@@ -22,7 +22,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Common Setup
         uses: ./.github/actions/common-setup
@@ -53,7 +53,7 @@ jobs:
     if: always() && vars.DISCORD_WEBHOOK_ID
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Common Setup
         uses: ./.github/actions/common-setup
