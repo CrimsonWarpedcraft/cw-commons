@@ -21,8 +21,9 @@ public class BaseCommand implements Command {
    *
    * @param command the CommandAPICommand to register
    */
-  @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-      justification = "CommandAPICommand cannot be defensively copied; caller owns it")
+  @SuppressFBWarnings(value = {"EI_EXPOSE_REP2", "CT_CONSTRUCTOR_THROW"},
+      justification = "CommandAPICommand cannot be defensively copied; caller owns it. "
+          + "Class is designed to be subclassed, so it cannot be made final.")
   public BaseCommand(CommandAPICommand command) {
     this.command = Objects.requireNonNull(command);
   }
