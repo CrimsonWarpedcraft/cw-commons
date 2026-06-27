@@ -5,8 +5,9 @@ nav_order: 1
 
 # CwCommons
 
-Shared library for CrimsonWarpedCraft Bukkit plugins. Provides reusable infrastructure for
-configuration loading, command registration, and persistent data storage.
+Shared library for CrimsonWarpedcraft Bukkit plugins. It bundles the infrastructure that every
+plugin ends up rewriting — **configuration loading**, **command registration**, and **persistent
+data storage** — behind small, well-tested APIs so each plugin can focus on its own behaviour.
 
 [API Reference](https://jitpack.io/com/github/CrimsonWarpedcraft/cw-commons/latest/javadoc/){: .btn .btn-primary }
 [Get started](getting-started.md){: .btn }
@@ -15,17 +16,28 @@ configuration loading, command registration, and persistent data storage.
 
 ## Features
 
-- **`ConfigManager`** — loads and validates a YAML config file using Jackson and Jakarta Bean
-  Validation. Any POJO that implements `Config` and declares JSR-380 constraints (e.g. `@NotBlank`)
-  can be used. See [Config Loading](examples/config-loading.md).
-- **`BaseCommand`** — thin base class that wraps a `CommandAPICommand` and implements the
-  `Command` registration interface, so every plugin command follows the same pattern. See
-  [Commands](examples/commands.md).
-- **`DataStore`** — write-behind key-value store with namespaced `Repository` instances. SQLite is
-  bundled; MongoDB is supported via an optional driver. Bukkit helpers include `PlayerDataManager`
-  (flushes on `PlayerQuitEvent`) and `AutoFlushTask` (periodic flush via the Bukkit scheduler).
-  Custom Jackson serializers for `Location` and `ItemStack` are included. See the
-  [storage examples](examples/store-sqlite.md).
+- **`ConfigManager`** — loads a YAML file into a plain Java object and validates it with Jakarta
+  Bean Validation. Any POJO that implements `Config` and declares JSR-380 constraints (e.g.
+  `@NotBlank`, `@Min`) works — a violation fails fast with a readable message instead of a
+  half-initialised plugin. See [Config Loading](examples/config-loading.md).
+- **`BaseCommand`** — a thin base class that wraps a `CommandAPICommand` and implements the
+  `Command` registration interface, so every command in every plugin is declared and registered
+  the same way. See [Commands](examples/commands.md).
+- **`DataStore`** — an asynchronous, write-behind key-value store split into namespaced
+  `Repository` instances. Writes are buffered in memory and flushed to disk off the main thread.
+  SQLite is bundled; MongoDB is a drop-in alternative behind the same API. Optional Bukkit helpers
+  cover per-player data, periodic flushing, and `Location`/`ItemStack` serialization. Start with
+  the [Data Store](examples/store.md) guide.
+
+## How the pieces fit together
+
+The three packages are independent — use one, two, or all of them:
+
+| Package | Entry point | Guide |
+|---------|-------------|-------|
+| `config` | `ConfigManager` | [Config Loading](examples/config-loading.md) |
+| `command` | `BaseCommand` | [Commands](examples/commands.md) |
+| `store` | `DataStore` | [Data Store](examples/store.md) → [Bukkit Integration](examples/store-bukkit.md), [MongoDB](examples/store-mongo.md) |
 
 ## Documentation
 
