@@ -2,12 +2,16 @@ name: Docs
 
 # Builds the Just the Docs site and deploys it to GitHub Pages. The API reference (Javadoc) is
 # hosted per-version by JitPack (https://jitpack.io/com/github/CrimsonWarpedcraft/cw-commons), so
-# this workflow only builds the prose site. Runs when a release is published (release.yml creates
-# drafts, so this fires only once the maintainer publishes); workflow_dispatch allows manual rebuilds.
+# this workflow only builds the prose site, which is release-independent. It deploys from `main`
+# (the github-pages environment only permits the default branch by default), so it runs on pushes
+# that touch the docs and via manual dispatch — not on release tags, which the environment blocks.
 on:
-  release:
-    types:
-      - published
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
   workflow_dispatch:
 
 # Required by actions/deploy-pages.
@@ -23,8 +27,6 @@ concurrency:
 
 jobs:
   build:
-    # Skip prereleases so an -rc- publish never replaces the live stable docs.
-    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
