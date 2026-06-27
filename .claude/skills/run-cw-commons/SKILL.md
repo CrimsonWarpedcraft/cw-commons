@@ -47,7 +47,7 @@ Keep these in sync with the current state of the project:
 
 - **`CLAUDE.md`** — architecture, shadow JAR relocation table, test design rules
 - **`README.md`** — usage examples, dependency snippets
-- **`examples/`** — `store-sqlite.md`, `store-mongo.md`, `store-auto-flush.md`, `player-data.md`,
+- **`docs/examples/`** — `store-sqlite.md`, `store-mongo.md`, `store-auto-flush.md`, `player-data.md`,
   `config-loading.md`, `commands.md`; update any code snippets that reference changed APIs
 - **`.claude/skills/run-cw-commons/SKILL.md`** (this file) — build commands, shaded package
   list, JAR size estimate

@@ -1,3 +1,9 @@
+---
+title: Player Data Manager
+parent: Examples
+nav_order: 5
+---
+
 # Player Data Manager
 
 `PlayerDataManager<V>` wraps a `Repository<UUID, V>` and automatically flushes pending writes

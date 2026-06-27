@@ -1,0 +1,37 @@
+title: CwCommons
+description: >-
+  Shared library for CrimsonWarpedCraft Bukkit plugins — configuration loading,
+  command registration, and a write-behind data store.
+theme: just-the-docs
+
+# Served at the custom-domain root, so no path prefix.
+url: https://cw-commons.crimsonwarpedcraft.com
+baseurl: ""
+
+# The API reference (Javadoc) is hosted per-version by JitPack; /latest/ resolves to the newest
+# release. Older versions: https://jitpack.io/#CrimsonWarpedcraft/cw-commons
+aux_links:
+  "API Reference":
+    - "https://jitpack.io/com/github/CrimsonWarpedcraft/cw-commons/latest/javadoc/"
+aux_links_new_tab: true
+
+# "Edit this page on GitHub" footer links.
+gh_edit_link: true
+gh_edit_repository: "https://github.com/CrimsonWarpedcraft/cw-commons"
+gh_edit_branch: "main"
+gh_edit_source: docs
+gh_edit_view_mode: "tree"
+
+search_enabled: true
+
+# Apply the Just the Docs chrome (sidebar nav, header, search) to every page.
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+# Rewrites the relative `foo.md` links across pages to their built URLs (so they resolve
+# on any static host, not just GitHub Pages' .html fallback).
+plugins:
+  - jekyll-relative-links

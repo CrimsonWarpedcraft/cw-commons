@@ -1,2 +1,7 @@
 .gradle/
 build/
+
+# Jekyll docs site (local build output)
+docs/_site/
+docs/.jekyll-cache/
+docs/vendor/

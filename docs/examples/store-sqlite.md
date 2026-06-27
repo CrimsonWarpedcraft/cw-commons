@@ -1,3 +1,9 @@
+---
+title: SQLite Data Store
+parent: Examples
+nav_order: 3
+---
+
 # SQLite Data Store
 
 `DataStore` is a write-behind key-value store organized into namespaced `Repository` instances.

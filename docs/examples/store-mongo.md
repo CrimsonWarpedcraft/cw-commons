@@ -1,3 +1,9 @@
+---
+title: MongoDB Data Store
+parent: Examples
+nav_order: 4
+---
+
 # MongoDB Data Store
 
 `MongoDbBackend` is a drop-in alternative to `SqliteBackend` that persists data to MongoDB.

@@ -1,3 +1,9 @@
+---
+title: Auto-Flush Task
+parent: Examples
+nav_order: 6
+---
+
 # Auto-Flush Task
 
 `AutoFlushTask` schedules a periodic `DataStore.flush()` via the Bukkit task scheduler,
