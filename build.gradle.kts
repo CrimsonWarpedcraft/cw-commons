@@ -3,6 +3,7 @@ import com.github.spotbugs.snom.SpotBugsTask
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.TimeZone
+import org.gradle.external.javadoc.StandardJavadocDocletOptions
 
 plugins {
     checkstyle
@@ -81,6 +82,39 @@ tasks.test {
     jvmArgs("-javaagent:${mockitoAgent.asPath}")
 }
 
+tasks.javadoc {
+    title = "CwCommons ${project.version} API"
+    // A lint nit must never fail the docs release job; -missing also avoids noise from
+    // package-private records/lambdas. Real reference errors still surface as warnings.
+    isFailOnError = false
+    (options as StandardJavadocDocletOptions).apply {
+        windowTitle = "CwCommons ${project.version} API"
+        docTitle = "CwCommons ${project.version} API"
+        encoding = "UTF-8"
+        docEncoding = "UTF-8"
+        charSet = "UTF-8"
+        source = "25"
+        addStringOption("Xdoclint:all,-missing", "-quiet")
+        // Online -link targets: unreachable element-lists only warn (types render unlinked),
+        // so a wrong/missing target never produces broken hyperlinks. Paper/CommandAPI omitted
+        // (their hosted element-lists are unstable).
+        links(
+            "https://docs.oracle.com/en/java/javase/25/docs/api/",
+            "https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-databind/2.22.0/",
+            "https://javadoc.io/doc/org.mongodb/mongodb-driver-sync/5.8.0/",
+            "https://javadoc.io/doc/jakarta.validation/jakarta.validation-api/3.1.1/"
+        )
+    }
+}
+
+// Bundled as a GitHub Release asset so every version's API docs stay downloadable, even though
+// the published site (docs.yml) only serves the latest. Standalone (not wired into `build`) so
+// normal builds stay fast; the `release` task pulls it into build/libs/ for upload.
+val javadocJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("javadoc")
+    from(tasks.javadoc)
+}
+
 checkstyle {
     toolVersion = "13.6.0"
     maxWarnings = 0
@@ -136,6 +170,7 @@ tasks.register("printProjectName") {
 
 tasks.register("release") {
     dependsOn(tasks.named("build"))
+    dependsOn(javadocJar)
 
     doLast {
         tasks.named<ShadowJar>("shadowJar").get().archiveFile.get().asFile
@@ -148,6 +183,9 @@ publishing {
         create<MavenPublication>("shadow") {
             artifactId = "cw-commons"
             artifact(tasks.named<ShadowJar>("shadowJar"))
+            // Published so JitPack hosts per-version Javadoc at
+            // https://jitpack.io/com/github/CrimsonWarpedcraft/cw-commons/<version>/javadoc/
+            artifact(javadocJar)
             pom.withXml {
                 val deps = asNode().appendNode("dependencies")
                 configurations["api"].dependencies.forEach { dep ->

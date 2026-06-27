@@ -1,3 +1,9 @@
+---
+title: Commands
+parent: Examples
+nav_order: 2
+---
+
 # Commands
 
 `BaseCommand` wraps a pre-built `CommandAPICommand` and implements the `Command` registration

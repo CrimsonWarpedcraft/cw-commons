@@ -1,3 +1,9 @@
+---
+title: Config Loading
+parent: Examples
+nav_order: 1
+---
+
 # Config Loading
 
 `ConfigManager` reads a YAML file, deserializes it into any POJO that implements `Config`, and

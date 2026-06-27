@@ -4,6 +4,10 @@ Shared library for CrimsonWarpedCraft Bukkit plugins. Provides reusable infrastr
 configuration loading and command registration.
 
 [![Test and Publish Snapshot](https://github.com/CrimsonWarpedcraft/cw-commons/actions/workflows/main.yml/badge.svg)](https://github.com/CrimsonWarpedcraft/cw-commons/actions/workflows/main.yml)
+[![Documentation](https://img.shields.io/badge/docs-cw--commons.crimsonwarpedcraft.com-blue)](https://cw-commons.crimsonwarpedcraft.com)
+
+📖 **Full documentation, guides, and API reference:**
+[cw-commons.crimsonwarpedcraft.com](https://cw-commons.crimsonwarpedcraft.com)
 
 ## Features
 
@@ -100,3 +104,20 @@ gradlew.bat build
 ```
 
 The build step also runs all static-analysis checks (Checkstyle, SpotBugs) and unit tests.
+
+### Building the documentation
+
+The site at [cw-commons.crimsonwarpedcraft.com](https://cw-commons.crimsonwarpedcraft.com) is a
+[Just the Docs](https://just-the-docs.com) Jekyll site under `docs/`, published on each release by
+`.github/workflows/docs.yml`. The API reference (Javadoc) is hosted per-version by
+[JitPack](https://jitpack.io/#CrimsonWarpedcraft/cw-commons), which the site links out to.
+
+```bash
+# Preview the site locally (requires Ruby + Bundler). First run only: bundle install
+cd docs
+bundle install
+bundle exec jekyll serve   # http://localhost:4000
+
+# Preview the API docs locally — open build/docs/javadoc/index.html
+./gradlew javadoc
+```

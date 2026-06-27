@@ -16,12 +16,39 @@ gradlew.bat build        # Windows
 # Single test class
 ./gradlew test --tests "com.crimsonwarpedcraft.cwcommons.store.ConcurrentDataStoreTest"
 
-# Release JAR (outputs build/libs/CwCommons.jar)
+# Release JAR + Javadoc jar (outputs build/libs/CwCommons.jar and CwCommons-<ver>-javadoc.jar)
 ./gradlew release -Pver=v1.0.0
+
+# API docs only (outputs build/docs/javadoc/index.html)
+./gradlew javadoc
 ```
 
 `build` runs Checkstyle (Google Java Style, 100-char line limit, zero warnings) and SpotBugs
 (with FindSecBugs) in addition to tests. Fix every warning — `maxWarnings = 0`.
+
+## Documentation site
+
+The published docs site lives in `docs/` — a [Just the Docs](https://just-the-docs.com) Jekyll
+site (landing page + the `docs/examples/` guides). `.github/workflows/docs.yml` builds and deploys
+it to GitHub Pages (custom domain `cw-commons.crimsonwarpedcraft.com`) on each published release via
+`actions/deploy-pages`; it skips prereleases.
+
+The API reference (Javadoc) is hosted per-version by JitPack at
+`https://jitpack.io/com/github/CrimsonWarpedcraft/cw-commons/<version>/javadoc/` (the site links out
+to `/latest/`). That works because the `shadow` Maven publication includes the `-javadoc.jar` built
+by the `javadocJar` task — the same jar the `release` task drops in `build/libs/` and `release.yml`
+attaches to the GitHub Release. The `javadoc` task options live in `build.gradle.kts`.
+
+Preview locally (requires Ruby + Bundler):
+
+```powershell
+cd docs
+bundle install                      # first run only
+bundle exec jekyll serve            # http://localhost:4000
+
+# Preview the API docs: open build/docs/javadoc/index.html
+./gradlew javadoc
+```
 
 ## Architecture
 

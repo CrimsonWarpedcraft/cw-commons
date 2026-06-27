@@ -1,0 +1,58 @@
+name: Docs
+
+# Builds the Just the Docs site and deploys it to GitHub Pages. The API reference (Javadoc) is
+# hosted per-version by JitPack (https://jitpack.io/com/github/CrimsonWarpedcraft/cw-commons), so
+# this workflow only builds the prose site. Runs when a release is published (release.yml creates
+# drafts, so this fires only once the maintainer publishes); workflow_dispatch allows manual rebuilds.
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+
+# Required by actions/deploy-pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; never cancel an in-progress publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # Skip prereleases so an -rc- publish never replaces the live stable docs.
+    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: docs
+
+      - name: Build site
+        working-directory: docs
+        run: bundle exec jekyll build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
