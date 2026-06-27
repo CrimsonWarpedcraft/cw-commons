@@ -1,6 +1,6 @@
 title: CwCommons
 description: >-
-  Shared library for CrimsonWarpedCraft Bukkit plugins — configuration loading,
+  Shared library for CrimsonWarpedcraft Bukkit plugins — configuration loading,
   command registration, and a write-behind data store.
 theme: just-the-docs
 
