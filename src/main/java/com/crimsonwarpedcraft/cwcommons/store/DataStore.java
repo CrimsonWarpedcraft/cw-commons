@@ -3,6 +3,7 @@ package com.crimsonwarpedcraft.cwcommons.store;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
@@ -63,17 +64,49 @@ public interface DataStore extends AutoCloseable {
    * @param dataDir the directory in which to create the database file
    * @return a ready-to-use store
    * @throws IOException if the SQLite database cannot be created or opened
+   * @deprecated For Bukkit plugins (the common case) use {@link
+   *     com.crimsonwarpedcraft.cwcommons.store.bukkit.BukkitDataStores}, which also registers the
+   *     Bukkit (de)serializers. For non-Bukkit or custom setups, assemble the store yourself from
+   *     {@link ConcurrentDataStore} and {@link ThreadedRepositoryBuilder}.
    */
+  @Deprecated(forRemoval = true)
+  static DataStore getLocalDataStore(String name, File dataDir) throws IOException {
+    return getLocalDataStore(name, dataDir, new Module[0]);
+  }
+
+  /**
+   * Creates a {@link DataStore} backed by a local SQLite file, registering the given Jackson
+   * modules on its mapper.
+   *
+   * <p>The returned store owns the backend; {@link #close()} flushes and closes it.
+   *
+   * @param name the plugin or store name; used as the database filename ({@code <name>.db})
+   *             and the I/O thread name ({@code <name>-store-io})
+   * @param dataDir the directory in which to create the database file
+   * @param modules Jackson modules to register on the store's mapper
+   * @return a ready-to-use store
+   * @throws IOException if the SQLite database cannot be created or opened
+   * @deprecated For Bukkit plugins (the common case) use {@link
+   *     com.crimsonwarpedcraft.cwcommons.store.bukkit.BukkitDataStores}. For custom serializers or
+   *     backends, assemble the store yourself from {@link ConcurrentDataStore} and
+   *     {@link ThreadedRepositoryBuilder}.
+   */
+  @Deprecated(forRemoval = true)
   @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN",
       justification = "name and dataDir are caller-supplied; callers are responsible for "
           + "ensuring these values do not contain path traversal sequences")
-  static DataStore getLocalDataStore(String name, File dataDir) throws IOException {
+  static DataStore getLocalDataStore(String name, File dataDir, Module... modules)
+      throws IOException {
     SqliteBackend sb = new SqliteBackend(
         new File(Objects.requireNonNull(dataDir), Objects.requireNonNull(name) + ".db")
     );
     CachingBackend cb = new CachingBackend(sb, WritePolicy.CACHE_AND_FLUSH);
+    ObjectMapper mapper = defaultMapper();
+    for (Module module : modules) {
+      mapper.registerModule(Objects.requireNonNull(module));
+    }
     ThreadedRepositoryBuilder trb =
-        new ThreadedRepositoryBuilder(cb, buildExecutor(name), defaultMapper(), true);
+        new ThreadedRepositoryBuilder(cb, buildExecutor(name), mapper, true);
     return new ConcurrentDataStore(trb);
   }
 

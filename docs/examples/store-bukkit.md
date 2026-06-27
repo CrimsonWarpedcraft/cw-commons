@@ -31,6 +31,7 @@ Together, `PlayerDataManager` and `AutoFlushTask` implement two of the three
 import com.crimsonwarpedcraft.cwcommons.store.DataStore;
 import com.crimsonwarpedcraft.cwcommons.store.KeySerializers;
 import com.crimsonwarpedcraft.cwcommons.store.Repository;
+import com.crimsonwarpedcraft.cwcommons.store.bukkit.BukkitDataStores;
 import com.crimsonwarpedcraft.cwcommons.store.bukkit.PlayerDataManager;
 import java.util.UUID;
 
@@ -40,7 +41,7 @@ public record PlayerStats(int kills, int deaths) {
 }
 
 // In onEnable()
-DataStore store = DataStore.getLocalDataStore("myplugin", getDataFolder());
+DataStore store = BukkitDataStores.getLocalDataStore("myplugin", getDataFolder());
 Repository<UUID, PlayerStats> repo =
     store.repository("stats", PlayerStats.class, KeySerializers.forUuid());
 
@@ -148,55 +149,57 @@ box. The package ships (de)serializers for both:
 > When a stored world is no longer loaded at read time, `LocationDeserializer` returns a `Location`
 > whose `world` is `null` — check for it before using the result.
 
-To use them, register them on a custom `ObjectMapper` and build the store by hand (this replaces
-`getLocalDataStore`, which builds its own mapper you can't extend — see
-[Advanced: custom backends](store.md#advanced-custom-backends-and-serialization)):
+### The easy way: `BukkitDataStores`
+
+`BukkitDataStores.getLocalDataStore` is the recommended entry point for a Bukkit plugin. It builds a
+managed, SQLite-backed store with the same defaults as the [core data store](store.md#quick-start),
+but with both (de)serializers already registered — for most plugins it's the only thing you need:
 
 ```java
-import com.crimsonwarpedcraft.cwcommons.store.CachingBackend;
-import com.crimsonwarpedcraft.cwcommons.store.ConcurrentDataStore;
-import com.crimsonwarpedcraft.cwcommons.store.SqliteBackend;
-import com.crimsonwarpedcraft.cwcommons.store.ThreadedRepositoryBuilder;
-import com.crimsonwarpedcraft.cwcommons.store.WritePolicy;
-import com.crimsonwarpedcraft.cwcommons.store.bukkit.ItemStackDeserializer;
-import com.crimsonwarpedcraft.cwcommons.store.bukkit.ItemStackSerializer;
-import com.crimsonwarpedcraft.cwcommons.store.bukkit.LocationDeserializer;
-import com.crimsonwarpedcraft.cwcommons.store.bukkit.LocationSerializer;
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import java.io.File;
-import java.util.concurrent.Executors;
-import org.bukkit.Location;
-import org.bukkit.inventory.ItemStack;
+import com.crimsonwarpedcraft.cwcommons.store.DataStore;
+import com.crimsonwarpedcraft.cwcommons.store.bukkit.BukkitDataStores;
 
-ObjectMapper mapper = new ObjectMapper()
-    .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
-    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    .registerModule(new SimpleModule()
-        .addSerializer(Location.class, new LocationSerializer())
-        .addDeserializer(Location.class, new LocationDeserializer())
-        .addSerializer(ItemStack.class, new ItemStackSerializer())
-        .addDeserializer(ItemStack.class, new ItemStackDeserializer()));
-
-SqliteBackend backend = new SqliteBackend(new File(getDataFolder(), "myplugin.db"));
-DataStore store = new ConcurrentDataStore(
-    new ThreadedRepositoryBuilder(
-        new CachingBackend(backend, WritePolicy.CACHE_AND_FLUSH),
-        Executors.newSingleThreadExecutor(r -> new Thread(r, "myplugin-store-io")),
-        mapper));
+// In onEnable()
+DataStore store = BukkitDataStores.getLocalDataStore("myplugin", getDataFolder());
 ```
 
-With those serializers registered module-wide, a `Location` or `ItemStack` anywhere in your value
-type just works:
+With the serializers registered store-wide, a `Location` or `ItemStack` anywhere in your value type
+just works:
 
 ```java
 public record HomeData(Location home, ItemStack icon) {}
 ```
 
-If you'd rather not register them globally, annotate individual fields instead — useful when only one
+`store.close()` flushes and closes the backend for you — no extra cleanup beyond the usual
+`onDisable()` steps [below](#cleanup-in-ondisable).
+
+### Bringing your own mapper
+
+`BukkitDataStores` bundles the four (de)serializers as a single Jackson module, `BukkitModule`. If
+you build the store [by hand](store.md#advanced-custom-backends-and-serialization) — to pick a
+different write policy, executor, or backend — register that module on your mapper instead of wiring
+the serializers up one by one:
+
+```java
+import com.crimsonwarpedcraft.cwcommons.store.bukkit.BukkitModule;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+ObjectMapper mapper = new ObjectMapper()
+    .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
+    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    .registerModule(new BukkitModule());
+```
+
+Remember the [ownership rule](store.md#advanced-custom-backends-and-serialization) for a hand-built
+store: pass `true` to the 4-arg `ThreadedRepositoryBuilder` constructor to have `store.close()` close
+the `SqliteBackend`, or close it yourself in `onDisable()`.
+
+### Per-field instead of store-wide
+
+If you'd rather not register globally, annotate individual fields instead — useful when only one
 field needs the custom format:
 
 ```java
@@ -209,10 +212,6 @@ public class HomeData {
     private Location home;
 }
 ```
-
-Because this store is hand-built, remember the [ownership rule](store.md#advanced-custom-backends-and-serialization):
-`store.close()` won't close the `SqliteBackend`, so close it yourself in `onDisable()` (or wrap the
-construction in `getLocalDataStore` if you don't need the custom mapper).
 
 ## Cleanup in `onDisable()`
 

@@ -1,6 +1,7 @@
 package com.crimsonwarpedcraft.cwcommons.store;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.Executor;
@@ -36,7 +37,20 @@ public final class ThreadedRepositoryBuilder implements RepositoryBuilder {
     this(storageBackend, executor, mapper, false);
   }
 
-  ThreadedRepositoryBuilder(
+  /**
+   * Creates a builder that uses the given backend, executor, and mapper, optionally taking
+   * ownership of the backend.
+   *
+   * @param storageBackend the backend to read from and write to
+   * @param executor the executor to dispatch I/O tasks on
+   * @param mapper the Jackson mapper used for JSON serialization
+   * @param closeBackendOnClose if {@code true}, {@link #close()} also closes the backend;
+   *     {@code false} leaves it for the caller to close
+   */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+      justification = "backend, executor, and mapper are intentionally shared by reference; "
+          + "callers own them")
+  public ThreadedRepositoryBuilder(
       StorageBackend storageBackend, Executor executor, ObjectMapper mapper,
       boolean closeBackendOnClose) {
     this.storageBackend = Objects.requireNonNull(storageBackend);
