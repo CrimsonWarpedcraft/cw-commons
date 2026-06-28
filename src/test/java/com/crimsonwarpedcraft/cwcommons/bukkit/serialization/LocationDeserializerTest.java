@@ -2,6 +2,7 @@ package com.crimsonwarpedcraft.cwcommons.bukkit.serialization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
@@ -96,5 +97,31 @@ class LocationDeserializerTest {
 
     assertEquals(0.0f, loc.getYaw(), 0.001f);
     assertEquals(0.0f, loc.getPitch(), 0.001f);
+  }
+
+  @Test
+  void missingYawAndPitchBecomeNanWhenConfigured() throws IOException {
+    SimpleModule module = new SimpleModule();
+    module.addDeserializer(Location.class, new LocationDeserializer(Float.NaN));
+    ObjectMapper nanMapper = new ObjectMapper().registerModule(module);
+    String json = "{\"x\":1.0,\"y\":64.0,\"z\":-3.0}";
+
+    Location loc = nanMapper.readValue(json, Location.class);
+
+    assertTrue(Float.isNaN(loc.getYaw()));
+    assertTrue(Float.isNaN(loc.getPitch()));
+  }
+
+  @Test
+  void presentYawAndPitchParseWhenConfiguredWithNan() throws IOException {
+    SimpleModule module = new SimpleModule();
+    module.addDeserializer(Location.class, new LocationDeserializer(Float.NaN));
+    ObjectMapper nanMapper = new ObjectMapper().registerModule(module);
+    String json = "{\"x\":1.0,\"y\":64.0,\"z\":-3.0,\"yaw\":12.0,\"pitch\":-5.0}";
+
+    Location loc = nanMapper.readValue(json, Location.class);
+
+    assertEquals(12.0f, loc.getYaw(), 0.001f);
+    assertEquals(-5.0f, loc.getPitch(), 0.001f);
   }
 }

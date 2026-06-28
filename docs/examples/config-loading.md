@@ -116,6 +116,60 @@ Config classes can bind Bukkit `Location` and `ItemStack` fields too — `Bukkit
 registers the serializers for you. See [Bukkit Types](bukkit-types.md) for the field formats and a
 full example.
 
+## Requiring a loaded world
+
+`@WorldExists` is a constraint for Bukkit `Location` fields: validation fails unless the location's
+world is loaded (its `Location#getWorld()` is non-null — which is how the bundled
+[`LocationDeserializer`](store-bukkit.md#storing-bukkit-types) represents an unloaded world). A
+`null` location passes, so pair it with `@NotNull` to also require presence.
+
+```java
+import com.crimsonwarpedcraft.cwcommons.config.Config;
+import com.crimsonwarpedcraft.cwcommons.config.bukkit.WorldExists;
+import org.bukkit.Location;
+
+public class SpawnConfig implements Config {
+    @WorldExists
+    private Location spawn;
+}
+```
+
+Load with `BukkitConfigManagers.create()` — it binds the `Location` from YAML via `BukkitModule` and
+runs the constraint during `load()`, so loading throws `IllegalStateException` if the configured
+world isn't loaded:
+
+```java
+SpawnConfig config = BukkitConfigManagers.create().load(configFile, SpawnConfig.class);
+// throws IllegalStateException if spawn's world isn't loaded
+```
+
+## Requiring orientation
+
+By default a `Location`'s `yaw` and `pitch` are optional in YAML and default to `0` when omitted,
+which keeps config terse. For a field where orientation matters, `@RequireOrientation` makes the
+config author spell them out — validation fails if either is missing:
+
+```java
+import com.crimsonwarpedcraft.cwcommons.config.Config;
+import com.crimsonwarpedcraft.cwcommons.config.bukkit.RequireOrientation;
+import org.bukkit.Location;
+
+public class SpawnConfig implements Config {
+    @RequireOrientation
+    private Location spawn;
+}
+```
+
+`BukkitConfigManagers.create()` binds the `Location` via the bundled `LocationDeserializer`, which
+marks an omitted `yaw`/`pitch` so the constraint can detect it during `load()`:
+
+```java
+SpawnConfig config = BukkitConfigManagers.create().load(configFile, SpawnConfig.class);
+// throws IllegalStateException if spawn omits yaw or pitch
+```
+
+A `null` location passes, so pair it with `@NotNull` to also require presence.
+
 ## Dependencies
 
 Jackson, Hibernate Validator, and Jakarta Validation arrive transitively — see

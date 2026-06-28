@@ -20,7 +20,8 @@ works" wherever it appears:
 
 A YAML object. `world` is the world *name* (or `null` if the location has no world); `x`/`y`/`z`
 are doubles and `yaw`/`pitch` are floats. `world`, `x`, `y`, and `z` are **required**; `yaw` and
-`pitch` are optional and default to `0`.
+`pitch` are optional and default to `0`. On a config field you can require them with
+[`@RequireOrientation`](config-loading.md#requiring-orientation).
 
 ```yaml
 world: world
