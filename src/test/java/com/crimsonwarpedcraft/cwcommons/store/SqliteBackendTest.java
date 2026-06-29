@@ -5,9 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
@@ -81,14 +86,5 @@ class SqliteBackendTest {
       nestedBackend.save("ns", "k", "v");
       assertTrue(nestedBackend.load("ns", "k").isPresent());
     }
-  }
-
-  @Test
-  void getLocalDataStoreClosesBackend(@TempDir Path tempDir) throws Exception {
-    try (DataStore store = DataStore.getLocalDataStore("test", tempDir.toFile())) {
-      assertNotNull(store.repository("ns", String.class, KeySerializers.forString()));
-    }
-    // store.close() propagates through ThreadedRepositoryBuilder → CachingBackend → SqliteBackend,
-    // releasing the file lock so @TempDir cleanup succeeds on Windows.
   }
 }

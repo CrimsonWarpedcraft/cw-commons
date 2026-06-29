@@ -1,6 +1,7 @@
 package com.crimsonwarpedcraft.cwcommons.store;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.Executor;
@@ -10,7 +11,7 @@ import java.util.concurrent.Executor;
  * shared {@link StorageBackend} and dispatches all I/O to a provided {@link Executor}.
  *
  * <p>The public 3-arg constructor does <em>not</em> take ownership of the backend — the caller
- * is responsible for closing it. Use {@link DataStore#getLocalDataStore} when you want the
+ * is responsible for closing it. Use {@code BukkitDataStores.getLocalDataStore} when you want the
  * backend lifecycle managed automatically.
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
@@ -36,7 +37,20 @@ public final class ThreadedRepositoryBuilder implements RepositoryBuilder {
     this(storageBackend, executor, mapper, false);
   }
 
-  ThreadedRepositoryBuilder(
+  /**
+   * Creates a builder that uses the given backend, executor, and mapper, optionally taking
+   * ownership of the backend.
+   *
+   * @param storageBackend the backend to read from and write to
+   * @param executor the executor to dispatch I/O tasks on
+   * @param mapper the Jackson mapper used for JSON serialization
+   * @param closeBackendOnClose if {@code true}, {@link #close()} also closes the backend;
+   *     {@code false} leaves it for the caller to close
+   */
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+      justification = "backend, executor, and mapper are intentionally shared by reference; "
+          + "callers own them")
+  public ThreadedRepositoryBuilder(
       StorageBackend storageBackend, Executor executor, ObjectMapper mapper,
       boolean closeBackendOnClose) {
     this.storageBackend = Objects.requireNonNull(storageBackend);

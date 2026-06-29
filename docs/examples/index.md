@@ -12,6 +12,8 @@ with copy-pasteable code.
 ## Configuration & commands
 
 - [Config Loading](config-loading.md) — load and validate a YAML config with `ConfigManager`.
+- [Bukkit Types](bukkit-types.md) — bind `Location` and `ItemStack` fields in configs and stored
+  values, and their serialized format.
 - [Commands](commands.md) — register commands with `BaseCommand`.
 
 ## Data storage

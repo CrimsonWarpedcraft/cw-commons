@@ -52,15 +52,21 @@ setups](#advanced-custom-backends-and-serialization)).
 
 ## Quick start
 
-`DataStore.getLocalDataStore(name, dataDir)` builds the whole stack above with a SQLite backend and
-sensible defaults — it's the entry point for the common case.
+For a Bukkit plugin — the common case —
+[`BukkitDataStores.getLocalDataStore(name, dataDir)`](store-bukkit.md#the-easy-way-bukkitdatastores)
+builds the whole stack above with a SQLite backend, sensible defaults, and the Bukkit
+(de)serializers already registered:
 
 ```java
 import com.crimsonwarpedcraft.cwcommons.store.DataStore;
+import com.crimsonwarpedcraft.cwcommons.store.bukkit.BukkitDataStores;
 
 // In onEnable()
-DataStore store = DataStore.getLocalDataStore("myplugin", getDataFolder());
+DataStore store = BukkitDataStores.getLocalDataStore("myplugin", getDataFolder());
 ```
+
+Not a Bukkit plugin, or need a custom backend or serializers? Assemble the store yourself (see
+[Advanced](#advanced-custom-backends-and-serialization)).
 
 The `name` is used for two things: the database filename (`myplugin.db` inside `getDataFolder()`)
 and the I/O thread name (`myplugin-store-io`, which shows up in thread dumps). The file and any
@@ -217,9 +223,10 @@ from `getAll()`, so both directions must round-trip.
 
 ## Advanced: custom backends and serialization
 
-`getLocalDataStore` is a convenience wrapper. To control the backend, the write policy, the executor,
-or the Jackson `ObjectMapper` (needed for [Bukkit types](store-bukkit.md#storing-bukkit-types)),
-assemble the stack yourself. The pieces map one-to-one onto the [layer diagram](#how-its-layered):
+[`BukkitDataStores.getLocalDataStore`](store-bukkit.md#the-easy-way-bukkitdatastores) covers the
+common case. Assemble the stack yourself when you need a custom backend, write policy, executor, or
+`ObjectMapper` (your own serializers). The pieces map one-to-one onto the
+[layer diagram](#how-its-layered):
 
 ```java
 import com.crimsonwarpedcraft.cwcommons.store.CachingBackend;
@@ -249,10 +256,11 @@ DataStore store = new ConcurrentDataStore(
         mapper));
 ```
 
-> **Ownership note.** The public 3-arg `ThreadedRepositoryBuilder` constructor does **not** take
+> **Ownership note.** The 3-arg `ThreadedRepositoryBuilder` constructor shown above does **not** take
 > ownership of the backend — `store.close()` shuts down the executor but does *not* close the
-> `SqliteBackend` or its file handle. Either close the backend yourself in `onDisable()`, or use
-> `getLocalDataStore`, which manages the backend lifecycle for you.
+> `SqliteBackend` or its file handle. Either close the backend yourself in `onDisable()`, or pass
+> `true` to the 4-arg `ThreadedRepositoryBuilder(backend, executor, mapper, closeBackendOnClose)`
+> constructor to have `store.close()` close it for you — this is what `BukkitDataStores` does.
 
 From here you can:
 

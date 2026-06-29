@@ -1,4 +1,4 @@
-package com.crimsonwarpedcraft.cwcommons.store.bukkit;
+package com.crimsonwarpedcraft.cwcommons.bukkit.serialization;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;

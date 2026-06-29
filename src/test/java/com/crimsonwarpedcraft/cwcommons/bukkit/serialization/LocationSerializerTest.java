@@ -1,4 +1,4 @@
-package com.crimsonwarpedcraft.cwcommons.store.bukkit;
+package com.crimsonwarpedcraft.cwcommons.bukkit.serialization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

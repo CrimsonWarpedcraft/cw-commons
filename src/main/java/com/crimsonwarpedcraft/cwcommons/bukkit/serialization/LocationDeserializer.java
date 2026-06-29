@@ -1,4 +1,4 @@
-package com.crimsonwarpedcraft.cwcommons.store.bukkit;
+package com.crimsonwarpedcraft.cwcommons.bukkit.serialization;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -15,6 +15,9 @@ import org.bukkit.World;
  * <p>Reads the format produced by {@link LocationSerializer}. If the stored world name does not
  * match a loaded world at deserialization time the {@code world} field of the returned
  * {@link Location} will be {@code null}.
+ *
+ * <p>{@code world}, {@code x}, {@code y}, and {@code z} are required; {@code yaw} and {@code pitch}
+ * are optional and default to {@code 0} when absent, which keeps hand-written config terse.
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */
@@ -36,8 +39,12 @@ public final class LocationDeserializer extends StdDeserializer<Location> {
     double x = node.get("x").asDouble();
     double y = node.get("y").asDouble();
     double z = node.get("z").asDouble();
-    float yaw = (float) node.get("yaw").asDouble();
-    float pitch = (float) node.get("pitch").asDouble();
+    float yaw = readOptionalFloat(node.get("yaw"));
+    float pitch = readOptionalFloat(node.get("pitch"));
     return new Location(world, x, y, z, yaw, pitch);
+  }
+
+  private static float readOptionalFloat(JsonNode node) {
+    return node != null && !node.isNull() ? (float) node.asDouble() : 0.0f;
   }
 }

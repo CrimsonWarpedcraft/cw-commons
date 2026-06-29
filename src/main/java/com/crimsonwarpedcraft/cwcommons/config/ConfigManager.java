@@ -1,20 +1,14 @@
 package com.crimsonwarpedcraft.cwcommons.config;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
 import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
 
 /**
  * Loads and validates plugin configuration from disk.
@@ -29,19 +23,18 @@ public final class ConfigManager {
   /**
    * Creates a ConfigManager with the given mapper and validator.
    *
-   * <p>Intended for testing — production code should use {@link #ConfigManager()}.
+   * <p>This is the low-level constructor; most callers should use
+   * {@code BukkitConfigManagers.create()}, which supplies a YAML mapper with the Bukkit serializers
+   * registered plus a validator.
    *
    * @param mapper the Jackson ObjectMapper to use for deserialization
    * @param validator the Jakarta Validator to use for constraint checking
    */
-  ConfigManager(ObjectMapper mapper, Validator validator) {
+  @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
+      justification = "mapper and validator are shared by reference; callers own them")
+  public ConfigManager(ObjectMapper mapper, Validator validator) {
     this.mapper = Objects.requireNonNull(mapper);
     this.validator = Objects.requireNonNull(validator);
-  }
-
-  /** Creates a ConfigManager with the default YAML mapper and validator. */
-  public ConfigManager() {
-    this(buildObjectMapper(), buildValidator());
   }
 
   /**
@@ -74,20 +67,6 @@ public final class ConfigManager {
           .map(v -> v.getPropertyPath() + ": " + v.getMessage())
           .collect(Collectors.joining(", "));
       throw new IllegalStateException("Invalid configuration: " + message);
-    }
-  }
-
-  private static ObjectMapper buildObjectMapper() {
-    return new ObjectMapper(new YAMLFactory())
-        .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-  }
-
-  private static Validator buildValidator() {
-    try (ValidatorFactory factory = Validation.byDefaultProvider()
-        .configure()
-        .messageInterpolator(new ParameterMessageInterpolator())
-        .buildValidatorFactory()) {
-      return factory.getValidator();
     }
   }
 }

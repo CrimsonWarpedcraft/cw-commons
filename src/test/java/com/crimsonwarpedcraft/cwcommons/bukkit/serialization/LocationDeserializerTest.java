@@ -1,4 +1,4 @@
-package com.crimsonwarpedcraft.cwcommons.store.bukkit;
+package com.crimsonwarpedcraft.cwcommons.bukkit.serialization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -73,5 +73,28 @@ class LocationDeserializerTest {
     Location loc = mapper.readValue(json, Location.class);
 
     assertNull(loc.getWorld());
+  }
+
+  @Test
+  void missingYawAndPitchDefaultToZero() throws IOException {
+    String json = "{\"x\":1.0,\"y\":64.0,\"z\":-3.0}";
+
+    Location loc = mapper.readValue(json, Location.class);
+
+    assertEquals(1.0, loc.getX());
+    assertEquals(64.0, loc.getY());
+    assertEquals(-3.0, loc.getZ());
+    assertEquals(0.0f, loc.getYaw(), 0.001f);
+    assertEquals(0.0f, loc.getPitch(), 0.001f);
+  }
+
+  @Test
+  void nullYawAndPitchDefaultToZero() throws IOException {
+    String json = "{\"x\":1.0,\"y\":64.0,\"z\":-3.0,\"yaw\":null,\"pitch\":null}";
+
+    Location loc = mapper.readValue(json, Location.class);
+
+    assertEquals(0.0f, loc.getYaw(), 0.001f);
+    assertEquals(0.0f, loc.getPitch(), 0.001f);
   }
 }

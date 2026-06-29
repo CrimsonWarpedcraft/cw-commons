@@ -1,7 +1,7 @@
 ---
 title: MongoDB Backend
 parent: Examples
-nav_order: 5
+nav_order: 6
 ---
 
 # MongoDB Backend
@@ -107,7 +107,7 @@ Only the backend construction changes; every `repository()`, `get()`, `put()`, `
 
 ```java
 // SQLite — the factory manages the executor and backend lifecycle for you
-DataStore store = DataStore.getLocalDataStore("myplugin", getDataFolder());
+DataStore store = BukkitDataStores.getLocalDataStore("myplugin", getDataFolder());
 
 // MongoDB — you own the executor and the backend lifecycle
 MongoDbBackend backend = new MongoDbBackend(uri, databaseName);

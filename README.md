@@ -13,7 +13,7 @@ configuration loading and command registration.
 
 - **`ConfigManager`** — loads and validates a YAML config file using Jackson and Jakarta Bean
   Validation. Any POJO that implements `Config` and declares JSR-380 constraints (e.g. `@NotBlank`)
-  can be used.
+  can be used; Bukkit `Location`/`ItemStack` fields bind too via `BukkitConfigManagers`.
 - **`BaseCommand`** — thin base class that wraps a `CommandAPICommand` and implements the
   `Command` registration interface, so every plugin command follows the same pattern.
 - **`DataStore`** — write-behind key-value store with namespaced `Repository` instances. SQLite is
@@ -58,7 +58,7 @@ public class MyConfig implements Config {
 }
 
 // Load and validate in onEnable()
-MyConfig config = new ConfigManager().load(configFile, MyConfig.class);
+MyConfig config = BukkitConfigManagers.create().load(configFile, MyConfig.class);
 ```
 
 `ConfigManager` throws `IOException` if the file cannot be read and `IllegalStateException` if any
