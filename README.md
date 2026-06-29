@@ -14,6 +14,10 @@ configuration loading and command registration.
 - **`ConfigManager`** — loads and validates a YAML config file using Jackson and Jakarta Bean
   Validation. Any POJO that implements `Config` and declares JSR-380 constraints (e.g. `@NotBlank`)
   can be used; Bukkit `Location`/`ItemStack` fields bind too via `BukkitConfigManagers`.
+- **`@WorldExists`** — a Jakarta Bean Validation constraint for Bukkit `Location` fields. A
+  `Location` annotated with it fails validation unless its world is loaded, so `ConfigManager`
+  (or any other `Validator`) can reject a config that points at a missing world. Omit it to skip
+  the check; combine it with `@NotNull` to also require the value to be present.
 - **`BaseCommand`** — thin base class that wraps a `CommandAPICommand` and implements the
   `Command` registration interface, so every plugin command follows the same pattern.
 - **`DataStore`** — write-behind key-value store with namespaced `Repository` instances. SQLite is
@@ -63,6 +67,19 @@ MyConfig config = BukkitConfigManagers.create().load(configFile, MyConfig.class)
 
 `ConfigManager` throws `IOException` if the file cannot be read and `IllegalStateException` if any
 declared constraint is violated.
+
+### Requiring a loaded world
+
+Annotate a Bukkit `Location` field with `@WorldExists`; validation then fails unless the world is
+loaded. A `null` location passes, so combine it with `@NotNull` to also require the value to be
+present.
+
+```java
+public class MyConfig implements Config {
+    @WorldExists
+    private Location spawn;
+}
+```
 
 ### Command registration
 

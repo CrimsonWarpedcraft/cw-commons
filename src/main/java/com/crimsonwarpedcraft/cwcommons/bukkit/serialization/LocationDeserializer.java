@@ -1,8 +1,12 @@
 package com.crimsonwarpedcraft.cwcommons.bukkit.serialization;
 
+import com.crimsonwarpedcraft.cwcommons.config.bukkit.RequireOrientation;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import java.io.IOException;
 import org.bukkit.Bukkit;
@@ -19,13 +23,43 @@ import org.bukkit.World;
  * <p>{@code world}, {@code x}, {@code y}, and {@code z} are required; {@code yaw} and {@code pitch}
  * are optional and default to {@code 0} when absent, which keeps hand-written config terse.
  *
+ * <p>This deserializer is contextual: when the target field is annotated with
+ * {@link RequireOrientation}, an absent {@code yaw} or {@code pitch} is read as {@link Float#NaN}
+ * instead of {@code 0} so that the {@code @RequireOrientation} constraint can detect the omission.
+ *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */
-public final class LocationDeserializer extends StdDeserializer<Location> {
+public final class LocationDeserializer extends StdDeserializer<Location>
+    implements ContextualDeserializer {
 
-  /** Creates a {@link LocationDeserializer}. */
+  private final float missingOrientation;
+
+  /**
+   * Creates a {@link LocationDeserializer} that defaults an absent {@code yaw} or {@code pitch}
+   * to {@code 0}.
+   */
   public LocationDeserializer() {
+    this(0.0f);
+  }
+
+  /**
+   * Creates a {@link LocationDeserializer} that substitutes the given value for an absent or null
+   * {@code yaw} or {@code pitch}.
+   *
+   * @param missingOrientation the value used when {@code yaw} or {@code pitch} is absent; pass
+   *     {@link Float#NaN} to mark orientation as missing for {@code @RequireOrientation} validation
+   */
+  public LocationDeserializer(float missingOrientation) {
     super(Location.class);
+    this.missingOrientation = missingOrientation;
+  }
+
+  @Override
+  public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property) {
+    if (property != null && property.getAnnotation(RequireOrientation.class) != null) {
+      return new LocationDeserializer(Float.NaN);
+    }
+    return this;
   }
 
   @Override
@@ -44,7 +78,7 @@ public final class LocationDeserializer extends StdDeserializer<Location> {
     return new Location(world, x, y, z, yaw, pitch);
   }
 
-  private static float readOptionalFloat(JsonNode node) {
-    return node != null && !node.isNull() ? (float) node.asDouble() : 0.0f;
+  private float readOptionalFloat(JsonNode node) {
+    return node != null && !node.isNull() ? (float) node.asDouble() : missingOrientation;
   }
 }
