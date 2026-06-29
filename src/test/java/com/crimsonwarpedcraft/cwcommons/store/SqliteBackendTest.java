@@ -87,40 +87,4 @@ class SqliteBackendTest {
       assertTrue(nestedBackend.load("ns", "k").isPresent());
     }
   }
-
-  @Test
-  @SuppressWarnings("removal") // intentionally exercises the deprecated 2-arg factory
-  void getLocalDataStoreClosesBackend(@TempDir Path tempDir) throws Exception {
-    try (DataStore store = DataStore.getLocalDataStore("test", tempDir.toFile())) {
-      assertNotNull(store.repository("ns", String.class, KeySerializers.forString()));
-    }
-    // store.close() propagates through ThreadedRepositoryBuilder → CachingBackend → SqliteBackend,
-    // releasing the file lock so @TempDir cleanup succeeds on Windows.
-  }
-
-  @Test
-  @SuppressWarnings("removal") // intentionally exercises the deprecated Module... factory
-  void getLocalDataStoreRegistersProvidedModules(@TempDir Path tempDir) throws Exception {
-    SimpleModule module = new SimpleModule().addSerializer(String.class, new UpperCaseSerializer());
-    try (DataStore store = DataStore.getLocalDataStore("mods", tempDir.toFile(), module)) {
-      Repository<String, String> repo =
-          store.repository("ns", String.class, KeySerializers.forString());
-      repo.put("k", "hello").get();
-      // Without the module the value round-trips unchanged; "HELLO" proves it reached the mapper.
-      assertEquals("HELLO", repo.get("k").get().orElseThrow());
-    }
-  }
-
-  /** Test serializer that upper-cases strings, used to observe module registration end-to-end. */
-  private static final class UpperCaseSerializer extends StdSerializer<String> {
-    UpperCaseSerializer() {
-      super(String.class);
-    }
-
-    @Override
-    public void serialize(String value, JsonGenerator gen, SerializerProvider provider)
-        throws IOException {
-      gen.writeString(value.toUpperCase(Locale.ROOT));
-    }
-  }
 }

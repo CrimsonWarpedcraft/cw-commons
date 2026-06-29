@@ -1,8 +1,9 @@
-package com.crimsonwarpedcraft.cwcommons.store.bukkit;
+package com.crimsonwarpedcraft.cwcommons.bukkit.serialization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -10,10 +11,12 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,24 +67,26 @@ class BukkitModuleTest {
 
   @Test
   void registersItemStackSerializer() throws IOException {
-    byte[] bytes = {1, 2, 3, 4};
+    Map<String, Object> serialized = new LinkedHashMap<>();
+    serialized.put("type", "STICK");
+    serialized.put("amount", 64);
     ItemStack item = mock(ItemStack.class);
-    when(item.serializeAsBytes()).thenReturn(bytes);
+    when(item.serialize()).thenReturn(serialized);
 
-    String json = mapper.writeValueAsString(item);
+    JsonNode node = mapper.readTree(mapper.writeValueAsString(item));
 
-    assertEquals("\"" + Base64.getEncoder().encodeToString(bytes) + "\"", json);
+    assertEquals("STICK", node.get("type").asText());
+    assertEquals(64, node.get("amount").asInt());
   }
 
   @Test
   void registersItemStackDeserializer() throws IOException {
-    byte[] bytes = {10, 20, 30};
-    String json = "\"" + Base64.getEncoder().encodeToString(bytes) + "\"";
+    String json = "{\"type\":\"STICK\",\"amount\":64}";
     ItemStack item = mock(ItemStack.class);
 
-    try (MockedStatic<ItemStack> itemStackStatic = mockStatic(ItemStack.class)) {
-      itemStackStatic
-          .when(() -> ItemStack.deserializeBytes(any(byte[].class)))
+    try (MockedStatic<ConfigurationSerialization> cs =
+        mockStatic(ConfigurationSerialization.class)) {
+      cs.when(() -> ConfigurationSerialization.deserializeObject(anyMap(), eq(ItemStack.class)))
           .thenReturn(item);
 
       ItemStack result = mapper.readValue(json, ItemStack.class);

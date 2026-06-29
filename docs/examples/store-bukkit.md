@@ -139,12 +139,17 @@ BukkitTask flushTask = new AutoFlushTask(store, this).start();
 ## Storing Bukkit types
 
 Bukkit's `Location` and `ItemStack` aren't plain data, so Jackson can't serialize them out of the
-box. The package ships (de)serializers for both:
+box. cw-commons ships (de)serializers for both in the `bukkit.serialization` package, bundled as
+`BukkitModule` — see [Bukkit Types](bukkit-types.md) for the serialized format. The data store wires
+them in here; config loading reuses the same module via `BukkitConfigManagers`:
 
 | Type | Serializers | Stored as |
 |------|-------------|-----------|
 | `Location` | `LocationSerializer` / `LocationDeserializer` | `{"world":…,"x":…,"y":…,"z":…,"yaw":…,"pitch":…}` |
-| `ItemStack` | `ItemStackSerializer` / `ItemStackDeserializer` | Base64 of `ItemStack#serializeAsBytes()` (preserves all NBT) |
+| `ItemStack` | `ItemStackSerializer` / `ItemStackDeserializer` | `{"type":"STICK","amount":64}` (Bukkit `ConfigurationSerializable` map) |
+
+The store persists these as JSON text in SQLite. The same field structure is written as YAML in a
+config — see [Bukkit Types](bukkit-types.md) for the format.
 
 > When a stored world is no longer loaded at read time, `LocationDeserializer` returns a `Location`
 > whose `world` is `null` — check for it before using the result.
@@ -181,7 +186,7 @@ different write policy, executor, or backend — register that module on your ma
 the serializers up one by one:
 
 ```java
-import com.crimsonwarpedcraft.cwcommons.store.bukkit.BukkitModule;
+import com.crimsonwarpedcraft.cwcommons.bukkit.serialization.BukkitModule;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -203,6 +208,8 @@ If you'd rather not register globally, annotate individual fields instead — us
 field needs the custom format:
 
 ```java
+import com.crimsonwarpedcraft.cwcommons.bukkit.serialization.LocationDeserializer;
+import com.crimsonwarpedcraft.cwcommons.bukkit.serialization.LocationSerializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 

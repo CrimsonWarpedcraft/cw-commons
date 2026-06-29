@@ -15,10 +15,13 @@ import static org.mockito.Mockito.verify;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Validation;
 import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 import jakarta.validation.constraints.NotBlank;
 import java.io.File;
 import java.io.IOException;
+import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
 import org.junit.jupiter.api.Test;
 
 class ConfigManagerTest {
@@ -49,14 +52,15 @@ class ConfigManagerTest {
 
   @Test
   void validateAcceptsValidConfig() {
-    assertDoesNotThrow(() -> new ConfigManager().validate(new TestConfig()));
+    ConfigManager manager = new ConfigManager(new ObjectMapper(), realValidator());
+    assertDoesNotThrow(() -> manager.validate(new TestConfig()));
   }
 
   @Test
   void validateThrowsOnViolations() {
-    TestConfig config = new TestConfig("");
+    ConfigManager manager = new ConfigManager(new ObjectMapper(), realValidator());
     assertThrows(IllegalStateException.class,
-        () -> new ConfigManager().validate(config));
+        () -> manager.validate(new TestConfig("")));
   }
 
   @Test
@@ -80,5 +84,14 @@ class ConfigManagerTest {
     doThrow(new IllegalStateException("invalid")).when(manager).validate(any());
     assertThrows(IllegalStateException.class,
         () -> manager.load(new File("anything.yml"), TestConfig.class));
+  }
+
+  private static Validator realValidator() {
+    try (ValidatorFactory factory = Validation.byDefaultProvider()
+        .configure()
+        .messageInterpolator(new ParameterMessageInterpolator())
+        .buildValidatorFactory()) {
+      return factory.getValidator();
+    }
   }
 }

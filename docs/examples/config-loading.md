@@ -61,14 +61,14 @@ A few things worth knowing about how `ConfigManager` reads this class:
 ## Load in `onEnable()`
 
 ```java
-import com.crimsonwarpedcraft.cwcommons.config.ConfigManager;
+import com.crimsonwarpedcraft.cwcommons.config.bukkit.BukkitConfigManagers;
 import java.io.File;
 
 // Write the bundled default config.yml if the file doesn't exist yet
 saveDefaultConfig();
 File configFile = new File(getDataFolder(), "config.yml");
 
-PluginConfig config = new ConfigManager().load(configFile, PluginConfig.class);
+PluginConfig config = BukkitConfigManagers.create().load(configFile, PluginConfig.class);
 getLogger().info("Server name: " + config.getServerName());
 ```
 
@@ -76,12 +76,16 @@ getLogger().info("Server name: " + config.getServerName());
 your JAR's resources into the data folder on first run. `ConfigManager` itself only reads files; it
 never writes defaults.
 
+`BukkitConfigManagers.create()` is the standard way to build a `ConfigManager` — it wires up the YAML
+mapper, a validator, and Bukkit `Location`/`ItemStack` support (see
+[Loading Bukkit types](#loading-bukkit-types)).
+
 A robust `onEnable()` turns a bad config into a clean shutdown rather than a stack trace:
 
 ```java
 PluginConfig config;
 try {
-    config = new ConfigManager().load(configFile, PluginConfig.class);
+    config = BukkitConfigManagers.create().load(configFile, PluginConfig.class);
 } catch (IOException | IllegalStateException e) {
     getLogger().severe("Failed to load config: " + e.getMessage());
     getServer().getPluginManager().disablePlugin(this);
@@ -103,8 +107,14 @@ assemble in code, or for unit tests.
 
 ```java
 PluginConfig cfg = new PluginConfig();
-new ConfigManager().validate(cfg); // throws IllegalStateException if invalid
+BukkitConfigManagers.create().validate(cfg); // throws IllegalStateException if invalid
 ```
+
+## Loading Bukkit types
+
+Config classes can bind Bukkit `Location` and `ItemStack` fields too — `BukkitConfigManagers.create()`
+registers the serializers for you. See [Bukkit Types](bukkit-types.md) for the field formats and a
+full example.
 
 ## Dependencies
 

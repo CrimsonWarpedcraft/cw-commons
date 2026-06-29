@@ -66,8 +66,7 @@ DataStore store = BukkitDataStores.getLocalDataStore("myplugin", getDataFolder()
 ```
 
 Not a Bukkit plugin, or need a custom backend or serializers? Assemble the store yourself (see
-[Advanced](#advanced-custom-backends-and-serialization)). The `DataStore.getLocalDataStore(...)`
-factory methods are deprecated for removal in favor of `BukkitDataStores` and manual assembly.
+[Advanced](#advanced-custom-backends-and-serialization)).
 
 The `name` is used for two things: the database filename (`myplugin.db` inside `getDataFolder()`)
 and the I/O thread name (`myplugin-store-io`, which shows up in thread dumps). The file and any

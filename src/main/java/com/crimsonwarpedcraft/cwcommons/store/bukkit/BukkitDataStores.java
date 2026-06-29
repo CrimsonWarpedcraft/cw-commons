@@ -1,5 +1,6 @@
 package com.crimsonwarpedcraft.cwcommons.store.bukkit;
 
+import com.crimsonwarpedcraft.cwcommons.bukkit.serialization.BukkitModule;
 import com.crimsonwarpedcraft.cwcommons.store.CachingBackend;
 import com.crimsonwarpedcraft.cwcommons.store.ConcurrentDataStore;
 import com.crimsonwarpedcraft.cwcommons.store.DataStore;

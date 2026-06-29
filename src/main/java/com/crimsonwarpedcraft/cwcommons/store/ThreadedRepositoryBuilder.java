@@ -11,7 +11,7 @@ import java.util.concurrent.Executor;
  * shared {@link StorageBackend} and dispatches all I/O to a provided {@link Executor}.
  *
  * <p>The public 3-arg constructor does <em>not</em> take ownership of the backend — the caller
- * is responsible for closing it. Use {@link DataStore#getLocalDataStore} when you want the
+ * is responsible for closing it. Use {@code BukkitDataStores.getLocalDataStore} when you want the
  * backend lifecycle managed automatically.
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.

@@ -12,8 +12,8 @@ import java.util.concurrent.ExecutionException;
  * A write-behind {@link DataStore} that buffers writes in memory and flushes them to a
  * {@link StorageBackend} asynchronously via the {@link RepositoryBuilder}'s executor.
  *
- * <p>Construct via {@link DataStore#getLocalDataStore} for a batteries-included SQLite-backed
- * store, or supply your own {@link RepositoryBuilder} for custom backends and executors.
+ * <p>For a batteries-included SQLite-backed store use {@code BukkitDataStores.getLocalDataStore},
+ * or supply your own {@link RepositoryBuilder} for custom backends and executors.
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */

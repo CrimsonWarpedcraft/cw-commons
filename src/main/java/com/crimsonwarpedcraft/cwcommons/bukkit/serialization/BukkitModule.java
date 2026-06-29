@@ -1,4 +1,4 @@
-package com.crimsonwarpedcraft.cwcommons.store.bukkit;
+package com.crimsonwarpedcraft.cwcommons.bukkit.serialization;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.bukkit.Location;
@@ -14,9 +14,8 @@ import org.bukkit.inventory.ItemStack;
  * ObjectMapper mapper = new ObjectMapper().registerModule(new BukkitModule());
  * }</pre>
  *
- * <p>Most plugins don't need to touch the mapper at all — use
- * {@link BukkitDataStores#getLocalDataStore(String, java.io.File)}, which wires this module in for
- * you.
+ * <p>Most plugins don't need to register it manually — {@code BukkitDataStores} (data store) and
+ * {@code BukkitConfigManagers} (config) wire it in for you.
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */

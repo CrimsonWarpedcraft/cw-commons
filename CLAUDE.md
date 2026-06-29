@@ -55,11 +55,14 @@ bundle exec jekyll serve            # http://localhost:4000
 Java 25, Gradle 9.5.1 (Kotlin DSL, `java-library` plugin), distributed via JitPack as
 `com.github.CrimsonWarpedcraft:cw-commons:VERSION`.
 
-Three packages, each with its own responsibility:
+The packages below, each with its own responsibility:
 
 **`config/`** — `ConfigManager` loads a YAML file via Jackson and validates it with Jakarta Bean
-Validation (JSR-380). Any POJO implementing `Config` with constraint annotations works. The
-package-private `ConfigManager(ObjectMapper, Validator)` constructor is a test seam.
+Validation (JSR-380). Any POJO implementing `Config` with constraint annotations works. It's a bare
+holder with a single public `ConfigManager(ObjectMapper, Validator)` constructor;
+`config/bukkit/BukkitConfigManagers.create()` is the standard entry point — it builds the default
+YAML mapper + validator and registers `BukkitModule` so `Location`/`ItemStack` fields bind from YAML.
+Advanced callers construct `ConfigManager` directly.
 
 **`command/`** — `BaseCommand` wraps a pre-built `CommandAPICommand` and implements the `Command`
 interface. CommandAPI is `compileOnly` and is NOT shaded into the library JAR.
@@ -68,9 +71,8 @@ interface. CommandAPI is `compileOnly` and is NOT shaded into the library JAR.
 - `DataStore` (public interface) → `ConcurrentDataStore` (public impl) manages a single-thread
   executor (`name + "-store-io"`) and a `RepositoryBuilder`.
   For Bukkit plugins (the common case) use `BukkitDataStores.getLocalDataStore(name, dataDir)`
-  (in `store/bukkit/`), which owns the full store assembly. Both `DataStore.getLocalDataStore(...)`
-  factory methods (the 2-arg and the `Module...` overload) are **`@Deprecated(forRemoval = true)`**;
-  the advanced path is manual assembly via `ConcurrentDataStore` + `ThreadedRepositoryBuilder`.
+  (in `store/bukkit/`), which owns the full store assembly. The advanced path is manual assembly
+  via `ConcurrentDataStore` + `ThreadedRepositoryBuilder`.
 - `RepositoryBuilder` (public `@FunctionalInterface`) → `ThreadedRepositoryBuilder`
   (public impl) wraps a `StorageBackend` and `Executor`, creating `ThreadedRepository` instances.
   Its public 4-arg constructor takes a `closeBackendOnClose` flag — pass `true` to make
@@ -87,16 +89,24 @@ interface. CommandAPI is `compileOnly` and is NOT shaded into the library JAR.
   and `KeySerializers.forString()`.
 - `WritePolicy.CACHE_AND_FLUSH` (default) buffers writes; `WRITE_THROUGH_ATOMIC` writes immediately.
 
-**`store/bukkit/`** — Bukkit-specific Jackson serializers/deserializers for `Location` and
-`ItemStack`, plus:
-- `BukkitModule` — a Jackson `SimpleModule` bundling all four serializers. `BukkitDataStores`
-  (`getLocalDataStore(name, dataDir)`) is the recommended common-case entry point and **owns** the
-  full store assembly (SQLite backend + `BukkitModule` + lifecycle). Core `store/` stays Bukkit-free
-  — the Bukkit coupling lives only here.
+**`bukkit/serialization/`** — shared Bukkit-specific Jackson (de)serializers for `Location` and
+`ItemStack`, bundled by `BukkitModule` (a `SimpleModule` registering all four). Reused by both the
+store and config Bukkit integrations. `LocationDeserializer` requires `world`/`x`/`y`/`z`;
+`yaw`/`pitch` are optional and default to `0`. A stored world that isn't loaded deserializes to a
+`Location` whose `world` is `null`.
+
+**`store/bukkit/`** — store-side Bukkit glue:
+- `BukkitDataStores` (`getLocalDataStore(name, dataDir)`) is the recommended common-case entry point;
+  it **owns** the full store assembly (SQLite backend + `BukkitModule` + lifecycle). Core `store/`
+  stays Bukkit-free.
 - `PlayerDataManager<V>` — wraps a `Repository<UUID, V>` and flushes on `PlayerQuitEvent`.
 - `AutoFlushTask` — schedules periodic `DataStore.flush()` via `BukkitScheduler`; `start()`
   returns a `BukkitTask` to cancel in `onDisable()`. Optional `Runnable onFlush` callback runs
   on the main thread after each flush (safe for Bukkit API calls).
+
+**`config/bukkit/`** — config-side Bukkit glue: `BukkitConfigManagers.create()` returns a
+`ConfigManager` with `BukkitModule` registered, so config classes can bind `Location`/`ItemStack`
+fields from YAML.
 
 ## Test design rules
 
@@ -106,9 +116,10 @@ interface. CommandAPI is `compileOnly` and is NOT shaded into the library JAR.
 - Mock `StorageBackend` and stub `load`/`loadAll` to return `Optional.empty()` / `new HashMap<>()`
   in `@BeforeEach`. `CachingBackendTest` calls `CachingBackend` directly (no executor needed).
   `ThreadedRepositoryTest` constructs `ThreadedRepository` directly with `Runnable::run`.
-- Use `MockedStatic<Bukkit>` and `MockedStatic<ItemStack>` for static calls in the bukkit package,
-  and `MockedStatic<MongoClients>` in `MongoDbBackendTest` to intercept `MongoClients.create()`
-  during construction. Requires the Mockito inline agent already configured in `build.gradle.kts`.
+- Use `MockedStatic<Bukkit>` and `MockedStatic<ItemStack>` for static calls in the Bukkit packages
+  (`bukkit/serialization`, `store/bukkit`, `config/bukkit`), and `MockedStatic<MongoClients>` in
+  `MongoDbBackendTest` to intercept `MongoClients.create()` during construction. Requires the
+  Mockito inline agent already configured in `build.gradle.kts`.
 - MongoDB driver is on `testImplementation` (not just `compileOnly`) to enable static mocking.
 
 ## Shadow JAR
