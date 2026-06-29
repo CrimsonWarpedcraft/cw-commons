@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
 
-class BukkitConfigManagersTest {
+class BukkitConfigManagerBuilderTest {
 
   record LocationConfig(Location spawn) implements Config {}
 
@@ -33,7 +33,7 @@ class BukkitConfigManagersTest {
       bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
 
       LocationConfig cfg =
-          BukkitConfigManagers.create().load(file.toFile(), LocationConfig.class);
+          new BukkitConfigManagerBuilder().build().load(file.toFile(), LocationConfig.class);
 
       assertNotNull(cfg.spawn());
       assertEquals(world, cfg.spawn().getWorld());
@@ -52,7 +52,7 @@ class BukkitConfigManagersTest {
     try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
       bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(mock(World.class));
 
-      ConfigManager manager = BukkitConfigManagers.create();
+      ConfigManager manager = new BukkitConfigManagerBuilder().build();
       assertThrows(IllegalStateException.class,
           () -> manager.load(file.toFile(), OrientedConfig.class));
     }
@@ -67,7 +67,7 @@ class BukkitConfigManagersTest {
       bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(mock(World.class));
 
       OrientedConfig cfg =
-          BukkitConfigManagers.create().load(file.toFile(), OrientedConfig.class);
+          new BukkitConfigManagerBuilder().build().load(file.toFile(), OrientedConfig.class);
 
       assertEquals(90.0f, cfg.spawn().getYaw(), 0.001f);
       assertEquals(-30.0f, cfg.spawn().getPitch(), 0.001f);

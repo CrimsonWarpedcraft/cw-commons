@@ -51,6 +51,13 @@ class ConfigManagerTest {
   }
 
   @Test
+  void builderBuildsValidatingManager() {
+    ConfigManager manager = ConfigManager.builder().build();
+    assertDoesNotThrow(() -> manager.validate(new TestConfig()));
+    assertThrows(IllegalStateException.class, () -> manager.validate(new TestConfig("")));
+  }
+
+  @Test
   void validateAcceptsValidConfig() {
     ConfigManager manager = new ConfigManager(new ObjectMapper(), realValidator());
     assertDoesNotThrow(() -> manager.validate(new TestConfig()));

@@ -18,15 +18,12 @@ import org.bson.Document;
  *
  * <p>Requires {@code org.mongodb:mongodb-driver-sync} on the classpath at runtime.
  *
- * <p>Usage:
+ * <p>Pass it to {@link DataStore#builder(StorageBackend)} like any other backend:
  * <pre>{@code
- * MongoDbBackend backend =
- *     new MongoDbBackend("mongodb://localhost:27017", "myDatabase");
- * DataStore store = new ConcurrentDataStore(
- *     new ThreadedRepositoryBuilder(
- *         new CachingBackend(backend, WritePolicy.CACHE_AND_FLUSH),
- *         Executors.newSingleThreadExecutor(),
- *         new ObjectMapper()));
+ * DataStore store = DataStore.builder(
+ *     new MongoDbBackend("mongodb://localhost:27017", "myDatabase"))
+ *     .name("myPlugin")
+ *     .build();
  * }</pre>
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.

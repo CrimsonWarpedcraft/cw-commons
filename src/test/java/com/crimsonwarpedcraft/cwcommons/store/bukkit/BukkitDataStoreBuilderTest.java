@@ -16,7 +16,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedConstruction;
 
-class BukkitDataStoresTest {
+class BukkitDataStoreBuilderTest {
 
   @Test
   void buildsWorkingLifecycleOwningStore() throws Exception {
@@ -25,14 +25,14 @@ class BukkitDataStoresTest {
           when(mock.load(any(), any())).thenReturn(Optional.empty());
           when(mock.loadAll(any())).thenReturn(new HashMap<>());
         })) {
-      try (DataStore store = BukkitDataStores.getLocalDataStore("plugin", new File("ignored"))) {
+      try (DataStore store = new BukkitDataStoreBuilder("plugin", new File("ignored")).build()) {
         Repository<String, String> repo =
             store.repository("ns", String.class, KeySerializers.forString());
         repo.put("k", "v").get();
         assertEquals("v", repo.get("k").get().orElseThrow());
       }
 
-      // The factory owns the backend it created: store.close() must close the SQLite backend.
+      // The builder owns the backend it created: store.close() must close the SQLite backend.
       assertEquals(1, construction.constructed().size());
       verify(construction.constructed().get(0)).close();
     }
