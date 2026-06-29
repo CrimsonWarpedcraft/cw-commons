@@ -28,35 +28,22 @@ dependencies {
 
 ## Setup
 
-There is no `getLocalDataStore` equivalent for MongoDB, so you assemble the
-[stack](store.md#how-its-layered) by hand — the same construction shown in
-[Advanced: custom backends](store.md#advanced-custom-backends-and-serialization), with
-`MongoDbBackend` in place of `SqliteBackend`. The constructor throws `IOException` if it can't
-connect.
+Pass a `MongoDbBackend` to [`DataStore.builder`](store.md#advanced-custom-backends-and-serialization)
+just like any other backend — the same entry point SQLite uses. The `MongoDbBackend` constructor
+throws `IOException` if it can't connect.
 
 ```java
-import com.crimsonwarpedcraft.cwcommons.store.CachingBackend;
-import com.crimsonwarpedcraft.cwcommons.store.ConcurrentDataStore;
 import com.crimsonwarpedcraft.cwcommons.store.DataStore;
 import com.crimsonwarpedcraft.cwcommons.store.MongoDbBackend;
-import com.crimsonwarpedcraft.cwcommons.store.ThreadedRepositoryBuilder;
-import com.crimsonwarpedcraft.cwcommons.store.WritePolicy;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.util.concurrent.Executors;
 
-// Keep references to both the backend and the store — you need both at shutdown (see below).
-MongoDbBackend backend;
 DataStore store;
 
 // In onEnable()
 try {
-    backend = new MongoDbBackend("mongodb://localhost:27017", "myDatabase");
-    store = new ConcurrentDataStore(
-        new ThreadedRepositoryBuilder(
-            new CachingBackend(backend, WritePolicy.CACHE_AND_FLUSH),
-            Executors.newSingleThreadExecutor(r -> new Thread(r, "myplugin-store-io")),
-            new ObjectMapper()));
+    store = DataStore.builder(new MongoDbBackend("mongodb://localhost:27017", "myDatabase"))
+        .name("myplugin")
+        .build();
 } catch (IOException e) {
     getLogger().severe("MongoDB backend failed: " + e.getMessage());
     getServer().getPluginManager().disablePlugin(this);
@@ -64,25 +51,21 @@ try {
 }
 ```
 
-> Using a plain `new ObjectMapper()` works for `record`s (Jackson binds them via the canonical
-> constructor). For POJOs with private fields, configure field visibility as shown in the
-> [custom-mapper example](store.md#advanced-custom-backends-and-serialization), otherwise they
-> serialize to `{}`.
+> The builder's default mapper sets field visibility, so plain POJOs and `record`s both serialize
+> correctly. Override it with `.mapper(...)` only to add serializers or change Jackson settings.
 
 ## Shutting down
 
-This is the one place manual construction differs from `getLocalDataStore`: **the store does not own
-the backend, so closing the store does not close the MongoDB connection.** Close the backend
-yourself, after the store:
+The builder's store **owns** the backend, so a single `store.close()` flushes pending writes, stops
+the I/O thread, and closes the MongoDB connection:
 
 ```java
 // In onDisable()
-store.close();    // flushes pending writes and stops the I/O thread
-backend.close();  // closes the underlying MongoClient
+store.close();    // flushes, stops the I/O thread, and closes the MongoClient
 ```
 
-(`getLocalDataStore` owns its `SqliteBackend` and closes it for you — that convenience doesn't exist
-for the hand-assembled MongoDB store.)
+If you share one `MongoDbBackend` across several stores, build them with `.closeBackend(false)` and
+close the backend yourself after closing the stores.
 
 ## Choosing a write policy on a shared database
 
@@ -97,7 +80,7 @@ database is often shared by several servers (a proxy network, for example):
   loads that key fresh.
 
 ```java
-new CachingBackend(backend, WritePolicy.WRITE_THROUGH_ATOMIC)
+DataStore.builder(backend).writePolicy(WritePolicy.WRITE_THROUGH_ATOMIC).build()
 ```
 
 ## Switching from SQLite
@@ -106,14 +89,11 @@ Only the backend construction changes; every `repository()`, `get()`, `put()`, `
 `close()` call is identical.
 
 ```java
-// SQLite — the factory manages the executor and backend lifecycle for you
-DataStore store = BukkitDataStores.getLocalDataStore("myplugin", getDataFolder());
+// SQLite — the Bukkit builder seeds the file backend and Bukkit serializers
+DataStore store = new BukkitDataStoreBuilder("myplugin", getDataFolder()).build();
 
-// MongoDB — you own the executor and the backend lifecycle
-MongoDbBackend backend = new MongoDbBackend(uri, databaseName);
-DataStore store = new ConcurrentDataStore(
-    new ThreadedRepositoryBuilder(
-        new CachingBackend(backend, WritePolicy.CACHE_AND_FLUSH),
-        Executors.newSingleThreadExecutor(),
-        new ObjectMapper()));
+// MongoDB — the same builder, a different backend
+DataStore store = DataStore.builder(new MongoDbBackend(uri, databaseName))
+    .name("myplugin")
+    .build();
 ```

@@ -59,32 +59,33 @@ The packages below, each with its own responsibility:
 
 **`config/`** — `ConfigManager` loads a YAML file via Jackson and validates it with Jakarta Bean
 Validation (JSR-380). Any POJO implementing `Config` with constraint annotations works. It's a bare
-holder with a single public `ConfigManager(ObjectMapper, Validator)` constructor;
-`config/bukkit/BukkitConfigManagers.create()` is the standard entry point — it builds the default
+holder built via `ConfigManager.builder()` (the domain constructor is package-private);
+`config/bukkit/BukkitConfigManagerBuilder` is the standard entry point — it builds the default
 YAML mapper + validator and registers `BukkitModule` so `Location`/`ItemStack` fields bind from YAML.
-Advanced callers construct `ConfigManager` directly.
+Advanced callers use `ConfigManager.builder().mapper(...).validator(...)`.
 
 **`command/`** — `BaseCommand` wraps a pre-built `CommandAPICommand` and implements the `Command`
 interface. CommandAPI is `compileOnly` and is NOT shaded into the library JAR.
 
 **`store/`** — Write-behind key-value store:
-- `DataStore` (public interface) → `ConcurrentDataStore` (public impl) manages a single-thread
-  executor (`name + "-store-io"`) and a `RepositoryBuilder`.
-  For Bukkit plugins (the common case) use `BukkitDataStores.getLocalDataStore(name, dataDir)`
-  (in `store/bukkit/`), which owns the full store assembly. The advanced path is manual assembly
-  via `ConcurrentDataStore` + `ThreadedRepositoryBuilder`.
+- `DataStore` (public interface) → `ConcurrentDataStore` (package-private impl) manages a single-thread
+  executor (`name + "-store-io"`) and a `RepositoryBuilder`. Build one via `DataStore.builder(backend)`
+  (returns the public `DataStoreBuilder`; mutable fluent, required backend as the param).
+  For Bukkit plugins (the common case) use `BukkitDataStoreBuilder` (in `store/bukkit/`), a
+  `DataStoreBuilder` subclass that owns the full SQLite assembly.
 - `RepositoryBuilder` (public `@FunctionalInterface`) → `ThreadedRepositoryBuilder`
-  (public impl) wraps a `StorageBackend` and `Executor`, creating `ThreadedRepository` instances.
-  Its public 4-arg constructor takes a `closeBackendOnClose` flag — pass `true` to make
-  `store.close()` close the backend (how `BukkitDataStores` owns its `SqliteBackend`).
+  (public type, package-private constructors) wraps a `StorageBackend` and `Executor`, creating
+  `ThreadedRepository` instances. `DataStoreBuilder.closeBackend(true)` (the default) makes
+  `store.close()` close the backend (how `BukkitDataStoreBuilder` owns its `SqliteBackend`).
 - `Repository<K,V>` (public interface) → `ThreadedRepository` (package-private impl) is a
   thin layer: serializes keys/values and dispatches all operations to the shared executor.
   No local state — caching lives in `CachingBackend`.
 - `StorageBackend` (public interface): `SqliteBackend` (bundled, construct directly),
   `MongoDbBackend` (requires `org.mongodb:mongodb-driver-sync`; construct directly with
-  `new MongoDbBackend(uri, databaseName)` — throws `IOException` if connection fails), or
-  `CachingBackend` (public decorator; wraps any backend; owns per-namespace in-memory cache
-  and write-buffering).
+  `new MongoDbBackend(uri, databaseName)` — throws `IOException` if connection fails; pass it to
+  `DataStore.builder(...)` for parity with SQLite), or `CachingBackend` (public type, package-private
+  constructor; wraps any backend; owns per-namespace in-memory cache and write-buffering — applied
+  automatically by `DataStoreBuilder`).
 - `KeySerializer<K>` converts typed keys to `String`. Built-in factories: `KeySerializers.forUuid()`
   and `KeySerializers.forString()`.
 - `WritePolicy.CACHE_AND_FLUSH` (default) buffers writes; `WRITE_THROUGH_ATOMIC` writes immediately.
@@ -96,17 +97,18 @@ store and config Bukkit integrations. `LocationDeserializer` requires `world`/`x
 `Location` whose `world` is `null`.
 
 **`store/bukkit/`** — store-side Bukkit glue:
-- `BukkitDataStores` (`getLocalDataStore(name, dataDir)`) is the recommended common-case entry point;
-  it **owns** the full store assembly (SQLite backend + `BukkitModule` + lifecycle). Core `store/`
-  stays Bukkit-free.
+- `BukkitDataStoreBuilder` (a `DataStoreBuilder` subclass; `new BukkitDataStoreBuilder(name, dataDir)`
+  then `.build()`) is the recommended common-case entry point; it **owns** the full store assembly
+  (SQLite backend + `BukkitModule` + lifecycle). Core `store/` stays Bukkit-free.
 - `PlayerDataManager<V>` — wraps a `Repository<UUID, V>` and flushes on `PlayerQuitEvent`.
-- `AutoFlushTask` — schedules periodic `DataStore.flush()` via `BukkitScheduler`; `start()`
-  returns a `BukkitTask` to cancel in `onDisable()`. Optional `Runnable onFlush` callback runs
-  on the main thread after each flush (safe for Bukkit API calls).
+- `AutoFlushTask` — schedules periodic `DataStore.flush()` via `BukkitScheduler`; built via
+  `AutoFlushTask.builder(store, plugin)` (`.interval()`, `.onFlush()`). `start()` returns a
+  `BukkitTask` to cancel in `onDisable()`. The `onFlush` callback runs on the main thread after each
+  flush (safe for Bukkit API calls).
 
-**`config/bukkit/`** — config-side Bukkit glue: `BukkitConfigManagers.create()` returns a
-`ConfigManager` with `BukkitModule` registered, so config classes can bind `Location`/`ItemStack`
-fields from YAML.
+**`config/bukkit/`** — config-side Bukkit glue: `BukkitConfigManagerBuilder` (a `ConfigManagerBuilder`
+subclass) builds a `ConfigManager` with `BukkitModule` registered, so config classes can bind
+`Location`/`ItemStack` fields from YAML.
 
 ## Test design rules
 

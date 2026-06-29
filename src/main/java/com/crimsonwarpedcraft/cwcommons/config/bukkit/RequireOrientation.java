@@ -35,7 +35,7 @@ import org.bukkit.Location;
  * omission, and the check fails. A {@code null} location is valid — combine it with
  * {@link jakarta.validation.constraints.NotNull} to require presence. The annotation only takes
  * effect on a mapper using that deserializer, such as one from
- * {@code BukkitConfigManagers.create()}.
+ * {@code BukkitConfigManagerBuilder}.
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */

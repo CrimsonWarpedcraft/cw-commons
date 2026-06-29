@@ -17,8 +17,8 @@ This page covers the concepts and the bundled SQLite backend. Once you understan
 ## How it's layered
 
 A `DataStore` is a stack of small pieces, each with one job. You normally only touch the top two;
-the rest is assembled for you by `getLocalDataStore` (or by hand for [custom
-setups](#advanced-custom-backends-and-serialization)).
+the rest is assembled for you by `DataStore.builder(...)` (or `BukkitDataStoreBuilder` for the Bukkit
+common case — see [custom setups](#advanced-custom-backends-and-serialization)).
 
 ```text
  Your plugin
@@ -53,16 +53,16 @@ setups](#advanced-custom-backends-and-serialization)).
 ## Quick start
 
 For a Bukkit plugin — the common case —
-[`BukkitDataStores.getLocalDataStore(name, dataDir)`](store-bukkit.md#the-easy-way-bukkitdatastores)
+[`BukkitDataStoreBuilder`](store-bukkit.md#the-easy-way-bukkitdatastorebuilder)
 builds the whole stack above with a SQLite backend, sensible defaults, and the Bukkit
 (de)serializers already registered:
 
 ```java
 import com.crimsonwarpedcraft.cwcommons.store.DataStore;
-import com.crimsonwarpedcraft.cwcommons.store.bukkit.BukkitDataStores;
+import com.crimsonwarpedcraft.cwcommons.store.bukkit.BukkitDataStoreBuilder;
 
 // In onEnable()
-DataStore store = BukkitDataStores.getLocalDataStore("myplugin", getDataFolder());
+DataStore store = new BukkitDataStoreBuilder("myplugin", getDataFolder()).build();
 ```
 
 Not a Bukkit plugin, or need a custom backend or serializers? Assemble the store yourself (see
@@ -158,8 +158,8 @@ Each store is built with one `WritePolicy`:
 | `CACHE_AND_FLUSH` *(default)* | Buffers writes in memory; persists them on `flush()` or `close()`. | Single-server setups — the fast, normal case. |
 | `WRITE_THROUGH_ATOMIC` | Persists every `put` immediately *and* caches it. `flush()` becomes a no-op. | Data must survive a crash without waiting for a flush, or a [shared database is read by multiple nodes](store-mongo.md). |
 
-`getLocalDataStore` always uses `CACHE_AND_FLUSH`. To choose `WRITE_THROUGH_ATOMIC`, construct the
-store [by hand](#advanced-custom-backends-and-serialization).
+The builder defaults to `CACHE_AND_FLUSH`. To choose `WRITE_THROUGH_ATOMIC`, pass it to
+`.writePolicy(...)` (see [Advanced](#advanced-custom-backends-and-serialization)).
 
 ## Flushing and lifecycle
 
@@ -176,8 +176,8 @@ store.close();
 
 - `store.flush()` fans out to every repository and returns a future that completes when all dirty
   entries have been persisted.
-- `store.close()` flushes first, then shuts down the I/O thread and (for a `getLocalDataStore`
-  store) closes the SQLite connection. **Always call it in `onDisable()`.**
+- `store.close()` flushes first, then shuts down the I/O thread and (when the store owns its
+  backend) closes the SQLite connection. **Always call it in `onDisable()`.**
 
 Three flush triggers cover most plugins; combine them:
 
@@ -223,44 +223,38 @@ from `getAll()`, so both directions must round-trip.
 
 ## Advanced: custom backends and serialization
 
-[`BukkitDataStores.getLocalDataStore`](store-bukkit.md#the-easy-way-bukkitdatastores) covers the
-common case. Assemble the stack yourself when you need a custom backend, write policy, executor, or
-`ObjectMapper` (your own serializers). The pieces map one-to-one onto the
-[layer diagram](#how-its-layered):
+[`BukkitDataStoreBuilder`](store-bukkit.md#the-easy-way-bukkitdatastorebuilder) covers the
+common case. For a custom backend, write policy, executor, or `ObjectMapper` (your own serializers),
+use `DataStore.builder(backend)` and set only the knobs you care about — everything else falls back
+to the same defaults:
 
 ```java
-import com.crimsonwarpedcraft.cwcommons.store.CachingBackend;
-import com.crimsonwarpedcraft.cwcommons.store.ConcurrentDataStore;
+import com.crimsonwarpedcraft.cwcommons.store.DataStore;
 import com.crimsonwarpedcraft.cwcommons.store.SqliteBackend;
-import com.crimsonwarpedcraft.cwcommons.store.ThreadedRepositoryBuilder;
 import com.crimsonwarpedcraft.cwcommons.store.WritePolicy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
-import java.util.concurrent.Executors;
 
-// Reproduce getLocalDataStore's mapper config, then customize as needed.
-// Without setVisibility, POJOs whose fields are private (and have no getters)
-// serialize to "{}" — this line is what makes plain data classes work.
+// The builder's default mapper already sets field visibility so plain data classes
+// (private fields, no getters) serialize correctly. Build your own only to add
+// serializers or change Jackson settings.
 ObjectMapper mapper = new ObjectMapper()
     .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-SqliteBackend backend = new SqliteBackend(new File(getDataFolder(), "myplugin.db"));
-DataStore store = new ConcurrentDataStore(
-    new ThreadedRepositoryBuilder(
-        new CachingBackend(backend, WritePolicy.CACHE_AND_FLUSH),
-        Executors.newSingleThreadExecutor(r -> new Thread(r, "myplugin-store-io")),
-        mapper));
+DataStore store = DataStore.builder(new SqliteBackend(new File(getDataFolder(), "myplugin.db")))
+    .name("myplugin")                          // I/O thread name: myplugin-store-io
+    .writePolicy(WritePolicy.CACHE_AND_FLUSH)
+    .mapper(mapper)
+    .build();
 ```
 
-> **Ownership note.** The 3-arg `ThreadedRepositoryBuilder` constructor shown above does **not** take
-> ownership of the backend — `store.close()` shuts down the executor but does *not* close the
-> `SqliteBackend` or its file handle. Either close the backend yourself in `onDisable()`, or pass
-> `true` to the 4-arg `ThreadedRepositoryBuilder(backend, executor, mapper, closeBackendOnClose)`
-> constructor to have `store.close()` close it for you — this is what `BukkitDataStores` does.
+> **Ownership note.** By default the store **owns** the backend — `store.close()` closes the
+> `SqliteBackend` (and its file handle) for you. Call `.closeBackend(false)` when the backend is
+> shared elsewhere and you want to close it yourself.
 
 From here you can:
 

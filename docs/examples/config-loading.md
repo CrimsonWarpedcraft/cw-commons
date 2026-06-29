@@ -61,14 +61,14 @@ A few things worth knowing about how `ConfigManager` reads this class:
 ## Load in `onEnable()`
 
 ```java
-import com.crimsonwarpedcraft.cwcommons.config.bukkit.BukkitConfigManagers;
+import com.crimsonwarpedcraft.cwcommons.config.bukkit.BukkitConfigManagerBuilder;
 import java.io.File;
 
 // Write the bundled default config.yml if the file doesn't exist yet
 saveDefaultConfig();
 File configFile = new File(getDataFolder(), "config.yml");
 
-PluginConfig config = BukkitConfigManagers.create().load(configFile, PluginConfig.class);
+PluginConfig config = new BukkitConfigManagerBuilder().build().load(configFile, PluginConfig.class);
 getLogger().info("Server name: " + config.getServerName());
 ```
 
@@ -76,7 +76,7 @@ getLogger().info("Server name: " + config.getServerName());
 your JAR's resources into the data folder on first run. `ConfigManager` itself only reads files; it
 never writes defaults.
 
-`BukkitConfigManagers.create()` is the standard way to build a `ConfigManager` — it wires up the YAML
+`BukkitConfigManagerBuilder` is the standard way to build a `ConfigManager` — it wires up the YAML
 mapper, a validator, and Bukkit `Location`/`ItemStack` support (see
 [Loading Bukkit types](#loading-bukkit-types)).
 
@@ -85,7 +85,7 @@ A robust `onEnable()` turns a bad config into a clean shutdown rather than a sta
 ```java
 PluginConfig config;
 try {
-    config = BukkitConfigManagers.create().load(configFile, PluginConfig.class);
+    config = new BukkitConfigManagerBuilder().build().load(configFile, PluginConfig.class);
 } catch (IOException | IllegalStateException e) {
     getLogger().severe("Failed to load config: " + e.getMessage());
     getServer().getPluginManager().disablePlugin(this);
@@ -107,12 +107,12 @@ assemble in code, or for unit tests.
 
 ```java
 PluginConfig cfg = new PluginConfig();
-BukkitConfigManagers.create().validate(cfg); // throws IllegalStateException if invalid
+new BukkitConfigManagerBuilder().build().validate(cfg); // throws IllegalStateException if invalid
 ```
 
 ## Loading Bukkit types
 
-Config classes can bind Bukkit `Location` and `ItemStack` fields too — `BukkitConfigManagers.create()`
+Config classes can bind Bukkit `Location` and `ItemStack` fields too — `BukkitConfigManagerBuilder`
 registers the serializers for you. See [Bukkit Types](bukkit-types.md) for the field formats and a
 full example.
 
@@ -134,12 +134,12 @@ public class SpawnConfig implements Config {
 }
 ```
 
-Load with `BukkitConfigManagers.create()` — it binds the `Location` from YAML via `BukkitModule` and
+Load with `new BukkitConfigManagerBuilder().build()` — it binds the `Location` from YAML via `BukkitModule` and
 runs the constraint during `load()`, so loading throws `IllegalStateException` if the configured
 world isn't loaded:
 
 ```java
-SpawnConfig config = BukkitConfigManagers.create().load(configFile, SpawnConfig.class);
+SpawnConfig config = new BukkitConfigManagerBuilder().build().load(configFile, SpawnConfig.class);
 // throws IllegalStateException if spawn's world isn't loaded
 ```
 
@@ -160,11 +160,11 @@ public class SpawnConfig implements Config {
 }
 ```
 
-`BukkitConfigManagers.create()` binds the `Location` via the bundled `LocationDeserializer`, which
+`new BukkitConfigManagerBuilder().build()` binds the `Location` via the bundled `LocationDeserializer`, which
 marks an omitted `yaw`/`pitch` so the constraint can detect it during `load()`:
 
 ```java
-SpawnConfig config = BukkitConfigManagers.create().load(configFile, SpawnConfig.class);
+SpawnConfig config = new BukkitConfigManagerBuilder().build().load(configFile, SpawnConfig.class);
 // throws IllegalStateException if spawn omits yaw or pitch
 ```
 

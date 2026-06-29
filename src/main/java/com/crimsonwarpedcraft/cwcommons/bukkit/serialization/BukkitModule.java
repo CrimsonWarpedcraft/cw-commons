@@ -14,8 +14,8 @@ import org.bukkit.inventory.ItemStack;
  * ObjectMapper mapper = new ObjectMapper().registerModule(new BukkitModule());
  * }</pre>
  *
- * <p>Most plugins don't need to register it manually — {@code BukkitDataStores} (data store) and
- * {@code BukkitConfigManagers} (config) wire it in for you.
+ * <p>Most plugins don't need to register it manually — {@code BukkitDataStoreBuilder} (data store)
+ * and {@code BukkitConfigManagerBuilder} (config) wire it in for you.
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */

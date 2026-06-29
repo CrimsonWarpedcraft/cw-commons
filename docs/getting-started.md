@@ -51,6 +51,32 @@ Some features need a dependency you add yourself:
 - **MongoDB driver** — required only if you use [`MongoDbBackend`](examples/store-mongo.md). Add
   `org.mongodb:mongodb-driver-sync` to your plugin.
 
+## How you construct things
+
+cw-commons follows one rule, applied by type shape:
+
+- **Builders** for assembled, configurable types. A static `builder(...)` takes the **required**
+  collaborators as parameters (so the compiler enforces them); fluent setters cover the optional
+  knobs, and `build()` produces the object:
+  - [`DataStore.builder(backend)`](examples/store.md#advanced-custom-backends-and-serialization),
+    or `new BukkitDataStoreBuilder(name, dataFolder)` for the Bukkit common case.
+  - [`ConfigManager.builder()`](examples/config-loading.md), or `new BukkitConfigManagerBuilder()`
+    for the Bukkit common case.
+  - [`AutoFlushTask.builder(store, plugin)`](examples/store-bukkit.md#periodic-flushing-with-autoflushtask).
+- **Plain constructors** for required-only leaf/value types: `new SqliteBackend(file)`,
+  `new MongoDbBackend(uri, db)`, `new PlayerDataManager<>(repo, plugin)`, `new BaseCommand(...)`.
+- **Static factories** for canned strategy objects: `KeySerializers.forUuid()` / `forString()`.
+- **No-arg constructors** for framework glue: `new BukkitModule()` and the Jackson (de)serializers.
+
+> **Migrating from 0.1.x.** The old static factories became builders:
+> `BukkitDataStores.getLocalDataStore(name, dir)` → `new BukkitDataStoreBuilder(name, dir).build()`;
+> `BukkitConfigManagers.create()` → `new BukkitConfigManagerBuilder().build()`; and
+> `new AutoFlushTask(store, plugin, ticks, cb)` →
+> `AutoFlushTask.builder(store, plugin).interval(ticks).onFlush(cb).build()`. The
+> `ConcurrentDataStore`, `CachingBackend`, and `ThreadedRepositoryBuilder` constructors are now
+> internal — assemble through `DataStore.builder(backend)` instead, which also gives MongoDB the same
+> one-builder path as SQLite.
+
 ## Next steps
 
 - [Config Loading](examples/config-loading.md) — load and validate `config.yml`.

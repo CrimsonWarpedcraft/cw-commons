@@ -12,8 +12,8 @@ import java.util.concurrent.ExecutionException;
  * A write-behind {@link DataStore} that buffers writes in memory and flushes them to a
  * {@link StorageBackend} asynchronously via the {@link RepositoryBuilder}'s executor.
  *
- * <p>For a batteries-included SQLite-backed store use {@code BukkitDataStores.getLocalDataStore},
- * or supply your own {@link RepositoryBuilder} for custom backends and executors.
+ * <p>Construct one via {@link DataStore#builder(StorageBackend)} (or {@code BukkitDataStoreBuilder}
+ * for Bukkit plugins), which wires up the backend, executor, and mapper for you.
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */
@@ -28,7 +28,7 @@ public final class ConcurrentDataStore implements DataStore {
    *
    * @param repositoryBuilder the factory used to create per-namespace repositories
    */
-  public ConcurrentDataStore(RepositoryBuilder repositoryBuilder) {
+  ConcurrentDataStore(RepositoryBuilder repositoryBuilder) {
     this.repositoryBuilder = Objects.requireNonNull(repositoryBuilder);
   }
 

@@ -10,6 +10,20 @@ import java.util.concurrent.CompletableFuture;
 public interface DataStore extends AutoCloseable {
 
   /**
+   * Returns a fluent builder for a store backed by the given backend.
+   *
+   * <p>This is the standard entry point for assembling a store. Bukkit plugins should prefer
+   * {@code BukkitDataStoreBuilder}, which pre-seeds a local SQLite backend and the Bukkit
+   * (de)serializers.
+   *
+   * @param backend the storage backend (e.g. {@link SqliteBackend} or {@code MongoDbBackend})
+   * @return a new builder
+   */
+  static DataStoreBuilder builder(StorageBackend backend) {
+    return new DataStoreBuilder(backend);
+  }
+
+  /**
    * Returns a {@link Repository} for the given namespace.
    *
    * <p>Calling this method multiple times with the same namespace returns the same instance.

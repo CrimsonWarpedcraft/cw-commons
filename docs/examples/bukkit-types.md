@@ -11,8 +11,8 @@ cw-commons ships Jackson (de)serializers for both in the `bukkit.serialization` 
 `BukkitModule`. Both subsystems register it for you, so a `Location` or `ItemStack` field "just
 works" wherever it appears:
 
-- **Config** — `BukkitConfigManagers.create()` (see [Config Loading](config-loading.md)).
-- **Data store** — `BukkitDataStores.getLocalDataStore(...)` (see [Bukkit Integration](store-bukkit.md)).
+- **Config** — `new BukkitConfigManagerBuilder().build()` (see [Config Loading](config-loading.md)).
+- **Data store** — `new BukkitDataStoreBuilder(...).build()` (see [Bukkit Integration](store-bukkit.md)).
 
 ## Serialized format
 
@@ -58,17 +58,17 @@ A top-level `==` is optional, so a hand-written item needs only `type` (plus opt
 ## In a config
 
 Declare `Location` and `ItemStack` fields like any other and load with
-`BukkitConfigManagers.create()`:
+`new BukkitConfigManagerBuilder().build()`:
 
 ```java
 import com.crimsonwarpedcraft.cwcommons.config.Config;
-import com.crimsonwarpedcraft.cwcommons.config.bukkit.BukkitConfigManagers;
+import com.crimsonwarpedcraft.cwcommons.config.bukkit.BukkitConfigManagerBuilder;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
 
 public record GuiConfig(Location anchor, ItemStack icon) implements Config {}
 
-GuiConfig config = BukkitConfigManagers.create().load(configFile, GuiConfig.class);
+GuiConfig config = new BukkitConfigManagerBuilder().build().load(configFile, GuiConfig.class);
 ```
 
 ```yaml
@@ -94,7 +94,7 @@ but as a JSON string in its SQLite database — same shape, different on-disk sy
 
 ## Bringing your own mapper
 
-`BukkitConfigManagers.create()` and `BukkitDataStores.getLocalDataStore(...)` register `BukkitModule`
+`new BukkitConfigManagerBuilder().build()` and `new BukkitDataStoreBuilder(...)` register `BukkitModule`
 for you. If you build a Jackson `ObjectMapper` yourself, register it directly:
 
 ```java

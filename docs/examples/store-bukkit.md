@@ -31,7 +31,7 @@ Together, `PlayerDataManager` and `AutoFlushTask` implement two of the three
 import com.crimsonwarpedcraft.cwcommons.store.DataStore;
 import com.crimsonwarpedcraft.cwcommons.store.KeySerializers;
 import com.crimsonwarpedcraft.cwcommons.store.Repository;
-import com.crimsonwarpedcraft.cwcommons.store.bukkit.BukkitDataStores;
+import com.crimsonwarpedcraft.cwcommons.store.bukkit.BukkitDataStoreBuilder;
 import com.crimsonwarpedcraft.cwcommons.store.bukkit.PlayerDataManager;
 import java.util.UUID;
 
@@ -41,7 +41,7 @@ public record PlayerStats(int kills, int deaths) {
 }
 
 // In onEnable()
-DataStore store = BukkitDataStores.getLocalDataStore("myplugin", getDataFolder());
+DataStore store = new BukkitDataStoreBuilder("myplugin", getDataFolder()).build();
 Repository<UUID, PlayerStats> repo =
     store.repository("stats", PlayerStats.class, KeySerializers.forUuid());
 
@@ -94,7 +94,7 @@ import com.crimsonwarpedcraft.cwcommons.store.bukkit.AutoFlushTask;
 import org.bukkit.scheduler.BukkitTask;
 
 // In onEnable()
-BukkitTask flushTask = new AutoFlushTask(store, this).start();
+BukkitTask flushTask = AutoFlushTask.builder(store, this).build().start();
 
 // In onDisable()
 flushTask.cancel();
@@ -109,19 +109,20 @@ little extra I/O for a smaller loss window.
 
 ```java
 // Flush every 10 minutes (12000 ticks)
-BukkitTask flushTask = new AutoFlushTask(store, this, 12000L).start();
+BukkitTask flushTask = AutoFlushTask.builder(store, this).interval(12000L).build().start();
 ```
 
 ### Post-flush callback
 
-Pass a `Runnable` as the fourth argument to run code **on the main thread** after each flush
+Pass a `Runnable` to `.onFlush(...)` to run code **on the main thread** after each flush
 completes — safe for Bukkit API calls such as sending messages.
 
 ```java
-BukkitTask flushTask = new AutoFlushTask(store, this, AutoFlushTask.DEFAULT_INTERVAL_TICKS,
-    () -> getServer().getOnlinePlayers().stream()
+BukkitTask flushTask = AutoFlushTask.builder(store, this)
+    .onFlush(() -> getServer().getOnlinePlayers().stream()
         .filter(p -> p.hasPermission("myplugin.admin"))
         .forEach(p -> p.sendMessage("[myplugin] Store flushed.")))
+    .build()
     .start();
 ```
 
@@ -133,7 +134,7 @@ moment a player leaves, while `AutoFlushTask` is the safety net for everyone sti
 ```java
 PlayerDataManager<PlayerStats> manager =
     new PlayerDataManager<>(repo, this).registerEvents();
-BukkitTask flushTask = new AutoFlushTask(store, this).start();
+BukkitTask flushTask = AutoFlushTask.builder(store, this).build().start();
 ```
 
 ## Storing Bukkit types
@@ -141,7 +142,7 @@ BukkitTask flushTask = new AutoFlushTask(store, this).start();
 Bukkit's `Location` and `ItemStack` aren't plain data, so Jackson can't serialize them out of the
 box. cw-commons ships (de)serializers for both in the `bukkit.serialization` package, bundled as
 `BukkitModule` — see [Bukkit Types](bukkit-types.md) for the serialized format. The data store wires
-them in here; config loading reuses the same module via `BukkitConfigManagers`:
+them in here; config loading reuses the same module via `BukkitConfigManagerBuilder`:
 
 | Type | Serializers | Stored as |
 |------|-------------|-----------|
@@ -154,18 +155,18 @@ config — see [Bukkit Types](bukkit-types.md) for the format.
 > When a stored world is no longer loaded at read time, `LocationDeserializer` returns a `Location`
 > whose `world` is `null` — check for it before using the result.
 
-### The easy way: `BukkitDataStores`
+### The easy way: `BukkitDataStoreBuilder`
 
-`BukkitDataStores.getLocalDataStore` is the recommended entry point for a Bukkit plugin. It builds a
+`BukkitDataStoreBuilder` is the recommended entry point for a Bukkit plugin. It builds a
 managed, SQLite-backed store with the same defaults as the [core data store](store.md#quick-start),
 but with both (de)serializers already registered — for most plugins it's the only thing you need:
 
 ```java
 import com.crimsonwarpedcraft.cwcommons.store.DataStore;
-import com.crimsonwarpedcraft.cwcommons.store.bukkit.BukkitDataStores;
+import com.crimsonwarpedcraft.cwcommons.store.bukkit.BukkitDataStoreBuilder;
 
 // In onEnable()
-DataStore store = BukkitDataStores.getLocalDataStore("myplugin", getDataFolder());
+DataStore store = new BukkitDataStoreBuilder("myplugin", getDataFolder()).build();
 ```
 
 With the serializers registered store-wide, a `Location` or `ItemStack` anywhere in your value type
@@ -180,10 +181,10 @@ public record HomeData(Location home, ItemStack icon) {}
 
 ### Bringing your own mapper
 
-`BukkitDataStores` bundles the four (de)serializers as a single Jackson module, `BukkitModule`. If
-you build the store [by hand](store.md#advanced-custom-backends-and-serialization) — to pick a
-different write policy, executor, or backend — register that module on your mapper instead of wiring
-the serializers up one by one:
+`BukkitDataStoreBuilder` bundles the four (de)serializers as a single Jackson module, `BukkitModule`.
+If you build the store with [`DataStore.builder`](store.md#advanced-custom-backends-and-serialization)
+— to pick a different write policy, executor, or backend — register that module on your mapper
+instead of wiring the serializers up one by one:
 
 ```java
 import com.crimsonwarpedcraft.cwcommons.bukkit.serialization.BukkitModule;
@@ -198,9 +199,9 @@ ObjectMapper mapper = new ObjectMapper()
     .registerModule(new BukkitModule());
 ```
 
-Remember the [ownership rule](store.md#advanced-custom-backends-and-serialization) for a hand-built
-store: pass `true` to the 4-arg `ThreadedRepositoryBuilder` constructor to have `store.close()` close
-the `SqliteBackend`, or close it yourself in `onDisable()`.
+Pass that mapper to `DataStore.builder(backend).mapper(mapper)`. The builder's store owns its backend
+by default, so `store.close()` closes the `SqliteBackend` for you; call `.closeBackend(false)` if you
+want to keep it open.
 
 ### Per-field instead of store-wide
 
@@ -226,5 +227,5 @@ public class HomeData {
 // Cancel the flush task, then close the store (which flushes all pending writes first)
 flushTask.cancel();
 store.close();
-// If you built the store by hand with your own backend, also: backend.close();
+// If you built the store with .closeBackend(false), also close it: backend.close();
 ```

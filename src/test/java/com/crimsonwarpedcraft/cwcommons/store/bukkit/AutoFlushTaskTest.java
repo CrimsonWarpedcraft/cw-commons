@@ -44,23 +44,23 @@ class AutoFlushTaskTest {
 
   @Test
   void nullStoreThrowsNpe() {
-    assertThrows(NullPointerException.class, () -> new AutoFlushTask(null, mockPlugin));
+    assertThrows(NullPointerException.class, () -> AutoFlushTask.builder(null, mockPlugin));
   }
 
   @Test
   void nullPluginThrowsNpe() {
-    assertThrows(NullPointerException.class, () -> new AutoFlushTask(mockStore, null));
+    assertThrows(NullPointerException.class, () -> AutoFlushTask.builder(mockStore, null));
   }
 
   @Test
   void nullOnFlushThrowsNpe() {
     assertThrows(NullPointerException.class,
-        () -> new AutoFlushTask(mockStore, mockPlugin, AutoFlushTask.DEFAULT_INTERVAL_TICKS, null));
+        () -> AutoFlushTask.builder(mockStore, mockPlugin).onFlush(null));
   }
 
   @Test
   void startSchedulesTimerWithDefaultInterval() {
-    new AutoFlushTask(mockStore, mockPlugin).start();
+    AutoFlushTask.builder(mockStore, mockPlugin).build().start();
     verify(mockScheduler).runTaskTimer(
         eq(mockPlugin), any(Runnable.class),
         eq(AutoFlushTask.DEFAULT_INTERVAL_TICKS), eq(AutoFlushTask.DEFAULT_INTERVAL_TICKS));
@@ -68,21 +68,21 @@ class AutoFlushTaskTest {
 
   @Test
   void startSchedulesTimerWithCustomInterval() {
-    new AutoFlushTask(mockStore, mockPlugin, 100L).start();
+    AutoFlushTask.builder(mockStore, mockPlugin).interval(100L).build().start();
     verify(mockScheduler).runTaskTimer(
         eq(mockPlugin), any(Runnable.class), eq(100L), eq(100L));
   }
 
   @Test
   void startReturnsBukkitTask() {
-    BukkitTask result = new AutoFlushTask(mockStore, mockPlugin).start();
+    BukkitTask result = AutoFlushTask.builder(mockStore, mockPlugin).build().start();
     assertSame(mockTask, result);
   }
 
   @Test
   void timerTickFlushesStore() {
     ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
-    new AutoFlushTask(mockStore, mockPlugin).start();
+    AutoFlushTask.builder(mockStore, mockPlugin).build().start();
     verify(mockScheduler).runTaskTimer(any(), captor.capture(), anyLong(), anyLong());
     captor.getValue().run();
     verify(mockStore).flush();
@@ -92,8 +92,7 @@ class AutoFlushTaskTest {
   void timerTickWithCallbackSchedulesCallbackOnMainThread() {
     Runnable onFlush = mock(Runnable.class);
     ArgumentCaptor<Runnable> timerCaptor = ArgumentCaptor.forClass(Runnable.class);
-    new AutoFlushTask(
-        mockStore, mockPlugin, AutoFlushTask.DEFAULT_INTERVAL_TICKS, onFlush).start();
+    AutoFlushTask.builder(mockStore, mockPlugin).onFlush(onFlush).build().start();
     verify(mockScheduler).runTaskTimer(any(), timerCaptor.capture(), anyLong(), anyLong());
     timerCaptor.getValue().run();
     verify(mockScheduler).runTask(eq(mockPlugin), eq(onFlush));
@@ -103,8 +102,7 @@ class AutoFlushTaskTest {
   void timerTickWithCallbackRunsCallback() {
     Runnable onFlush = mock(Runnable.class);
     ArgumentCaptor<Runnable> timerCaptor = ArgumentCaptor.forClass(Runnable.class);
-    new AutoFlushTask(
-        mockStore, mockPlugin, AutoFlushTask.DEFAULT_INTERVAL_TICKS, onFlush).start();
+    AutoFlushTask.builder(mockStore, mockPlugin).onFlush(onFlush).build().start();
     verify(mockScheduler).runTaskTimer(any(), timerCaptor.capture(), anyLong(), anyLong());
     timerCaptor.getValue().run();
     ArgumentCaptor<Runnable> mainCaptor = ArgumentCaptor.forClass(Runnable.class);

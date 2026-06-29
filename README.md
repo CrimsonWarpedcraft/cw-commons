@@ -13,7 +13,7 @@ configuration loading and command registration.
 
 - **`ConfigManager`** — loads and validates a YAML config file using Jackson and Jakarta Bean
   Validation. Any POJO that implements `Config` and declares JSR-380 constraints (e.g. `@NotBlank`)
-  can be used; Bukkit `Location`/`ItemStack` fields bind too via `BukkitConfigManagers`.
+  can be used; Bukkit `Location`/`ItemStack` fields bind too via `BukkitConfigManagerBuilder`.
 - **`@WorldExists`** — a Jakarta Bean Validation constraint for Bukkit `Location` fields. A
   `Location` annotated with it fails validation unless its world is loaded, so `ConfigManager`
   (or any other `Validator`) can reject a config that points at a missing world. Omit it to skip
@@ -62,7 +62,7 @@ public class MyConfig implements Config {
 }
 
 // Load and validate in onEnable()
-MyConfig config = BukkitConfigManagers.create().load(configFile, MyConfig.class);
+MyConfig config = new BukkitConfigManagerBuilder().build().load(configFile, MyConfig.class);
 ```
 
 `ConfigManager` throws `IOException` if the file cannot be read and `IllegalStateException` if any

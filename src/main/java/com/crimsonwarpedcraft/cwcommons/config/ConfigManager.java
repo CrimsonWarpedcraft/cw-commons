@@ -1,7 +1,6 @@
 package com.crimsonwarpedcraft.cwcommons.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import java.io.File;
@@ -21,18 +20,25 @@ public final class ConfigManager {
   private final Validator validator;
 
   /**
-   * Creates a ConfigManager with the given mapper and validator.
+   * Returns a fluent builder for a config manager.
    *
-   * <p>This is the low-level constructor; most callers should use
-   * {@code BukkitConfigManagers.create()}, which supplies a YAML mapper with the Bukkit serializers
-   * registered plus a validator.
+   * <p>This is the standard entry point. Bukkit plugins should prefer
+   * {@code BukkitConfigManagerBuilder}, which also registers the Bukkit (de)serializers so
+   * {@code Location}/{@code ItemStack} fields bind from YAML.
+   *
+   * @return a new builder
+   */
+  public static ConfigManagerBuilder builder() {
+    return new ConfigManagerBuilder();
+  }
+
+  /**
+   * Creates a ConfigManager with the given mapper and validator.
    *
    * @param mapper the Jackson ObjectMapper to use for deserialization
    * @param validator the Jakarta Validator to use for constraint checking
    */
-  @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-      justification = "mapper and validator are shared by reference; callers own them")
-  public ConfigManager(ObjectMapper mapper, Validator validator) {
+  ConfigManager(ObjectMapper mapper, Validator validator) {
     this.mapper = Objects.requireNonNull(mapper);
     this.validator = Objects.requireNonNull(validator);
   }

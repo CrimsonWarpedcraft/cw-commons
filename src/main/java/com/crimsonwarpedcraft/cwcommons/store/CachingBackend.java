@@ -1,6 +1,5 @@
 package com.crimsonwarpedcraft.cwcommons.store;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,10 +28,9 @@ public final class CachingBackend implements StorageBackend {
    * Creates a {@link CachingBackend} wrapping the given delegate.
    *
    * @param delegate the backend to delegate reads and flushed writes to
+   * @param policy when buffered writes are persisted to the delegate
    */
-  @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
-      justification = "StorageBackend is intentionally stored by reference; callers own it")
-  public CachingBackend(StorageBackend delegate, WritePolicy policy) {
+  CachingBackend(StorageBackend delegate, WritePolicy policy) {
     this.delegate = Objects.requireNonNull(delegate);
     this.policy = Objects.requireNonNull(policy);
   }
