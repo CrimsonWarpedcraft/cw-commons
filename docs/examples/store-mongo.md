@@ -67,20 +67,21 @@ store.close();    // flushes, stops the I/O thread, and closes the MongoClient
 If you share one `MongoDbBackend` across several stores, build them with `.closeBackend(false)` and
 close the backend yourself after closing the stores.
 
-## Choosing a write policy on a shared database
+## Choosing a cache mode on a shared database
 
-The [write policy](store.md#caching-and-write-policies) matters more with MongoDB, because a Mongo
+The [cache mode](store.md#caching-and-write-policies) matters more with MongoDB, because a Mongo
 database is often shared by several servers (a proxy network, for example):
 
 - **One server owns the data** → keep the default `CACHE_AND_FLUSH` for the same batching speed as
-  SQLite.
-- **Multiple servers read/write the same collections** → use `WRITE_THROUGH_ATOMIC` so each write
-  lands in MongoDB immediately and other nodes see it without waiting for a flush cycle. Note the
-  in-memory cache still serves local reads, so a node won't observe another node's update until it
-  loads that key fresh.
+  SQLite. Use `WRITE_THROUGH_ATOMIC` instead if that one server must not lose writes to a crash
+  before the next flush.
+- **Multiple servers read/write the same collections** → use `CacheMode.NONE`. Because the
+  in-memory cache is per-process, a cached node keeps serving its own copy of a key and never sees
+  another node's update; `NONE` removes the cache so every read reflects MongoDB's latest state and
+  every write goes straight through.
 
 ```java
-DataStore.builder(backend).writePolicy(WritePolicy.WRITE_THROUGH_ATOMIC).build()
+DataStore.builder(backend).cacheMode(CacheMode.NONE).build()
 ```
 
 ## Switching from SQLite

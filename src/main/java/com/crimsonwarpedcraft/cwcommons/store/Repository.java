@@ -61,7 +61,8 @@ public interface Repository<K, V> {
   /**
    * Flushes all pending writes to the underlying backend immediately.
    *
-   * <p>This is a no-op for repositories using {@link WritePolicy#WRITE_THROUGH_ATOMIC}.
+   * <p>This is a no-op for repositories using {@link CacheMode#WRITE_THROUGH_ATOMIC} or
+   * {@link CacheMode#NONE}, which never buffer writes.
    *
    * @return a future completing when all dirty entries have been persisted
    */
