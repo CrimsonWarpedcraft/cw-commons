@@ -88,7 +88,10 @@ interface. CommandAPI is `compileOnly` and is NOT shaded into the library JAR.
   automatically by `DataStoreBuilder`).
 - `KeySerializer<K>` converts typed keys to `String`. Built-in factories: `KeySerializers.forUuid()`
   and `KeySerializers.forString()`.
-- `WritePolicy.CACHE_AND_FLUSH` (default) buffers writes; `WRITE_THROUGH_ATOMIC` writes immediately.
+- `CacheMode` is the builder-facing selector (`DataStoreBuilder.cacheMode(...)`): `CACHE_AND_FLUSH`
+  (default) and `WRITE_THROUGH_ATOMIC` wrap the backend in a `CachingBackend` with the matching
+  `WritePolicy`; `NONE` skips the `CachingBackend` entirely (raw backend, no read cache) for
+  databases shared across servers. `WritePolicy` stays the required `CachingBackend` constructor arg.
 
 **`bukkit/serialization/`** — shared Bukkit-specific Jackson (de)serializers for `Location` and
 `ItemStack`, bundled by `BukkitModule` (a `SimpleModule` registering all four). Reused by both the

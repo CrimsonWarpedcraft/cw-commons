@@ -34,9 +34,9 @@ common case — see [custom setups](#advanced-custom-backends-and-serialization)
      │     • dispatches every operation onto the single I/O thread
      │  String key, String json
      ▼
- CachingBackend  (in-memory cache + write buffer)
+ CachingBackend  (in-memory cache + write buffer — skipped when CacheMode.NONE)
      │     • reads served from cache when possible
-     │     • writes buffered until flush(), per WritePolicy
+     │     • writes buffered until flush(), per the selected CacheMode
      │  cache misses, flushed writes, deletes
      ▼
  StorageBackend
@@ -137,29 +137,37 @@ Failures (e.g. a backend I/O error) surface as an **exceptional completion** wra
 ## Caching and write policies
 
 The `CachingBackend` is what makes the store "write-behind", and it's worth understanding because it
-governs *when* your data actually hits disk.
+governs *when* your data actually hits disk. You pick its behaviour with a `CacheMode` on the
+builder.
 
-- **Reads are cached.** The first `get` for a key loads it from the backend and keeps it in memory;
-  later reads of that key (and any key you've written) are served from the cache without disk I/O.
-- **Writes are buffered.** Under the default policy, `put` only updates the in-memory cache and marks
+- **Reads are cached** *(the two cached modes)*. The first `get` for a key loads it from the backend
+  and keeps it in memory; later reads of that key (and any key you've written) are served from the
+  cache without disk I/O.
+- **Writes are buffered** *(`CACHE_AND_FLUSH`)*. `put` only updates the in-memory cache and marks
   the entry *dirty*. The value is written to the backend the next time something calls `flush()` —
   see [Flushing & lifecycle](#flushing-and-lifecycle). Batching many writes into one flush is what
   keeps the store fast.
 - **Deletes are immediate.** `delete` always removes the key from both the cache and the backend
-  right away, regardless of policy — it is never buffered.
+  right away, regardless of mode — it is never buffered.
 - **The cache is unbounded.** It grows as keys are loaded and written and lives for the store's
   lifetime; there is no eviction. For per-player data this is fine (it's bounded by your player
   count), but don't use a single store as a cache for millions of keys.
 
-Each store is built with one `WritePolicy`:
+Each store is built with one `CacheMode`:
 
-| Policy | Behaviour | Use when |
-|--------|-----------|----------|
-| `CACHE_AND_FLUSH` *(default)* | Buffers writes in memory; persists them on `flush()` or `close()`. | Single-server setups — the fast, normal case. |
-| `WRITE_THROUGH_ATOMIC` | Persists every `put` immediately *and* caches it. `flush()` becomes a no-op. | Data must survive a crash without waiting for a flush, or a [shared database is read by multiple nodes](store-mongo.md). |
+| Mode | Behaviour | Use when |
+|------|-----------|----------|
+| `CACHE_AND_FLUSH` *(default)* | Caches reads; buffers writes in memory and persists them on `flush()` or `close()`. | Single-server setups — the fast, normal case. |
+| `WRITE_THROUGH_ATOMIC` | Caches reads, but persists every `put` immediately. `flush()` becomes a no-op. | One server owns the data and it must survive a crash without waiting for a flush. |
+| `NONE` | No cache at all: every read hits the backend fresh and every write goes straight through. `flush()` is a no-op. | A [database is shared by multiple servers](store-mongo.md) — each node must see the others' writes. |
 
-The builder defaults to `CACHE_AND_FLUSH`. To choose `WRITE_THROUGH_ATOMIC`, pass it to
-`.writePolicy(...)` (see [Advanced](#advanced-custom-backends-and-serialization)).
+The builder defaults to `CACHE_AND_FLUSH`. To choose another mode, pass it to `.cacheMode(...)`
+(see [Advanced](#advanced-custom-backends-and-serialization)).
+
+> **Why `NONE` for a shared database?** The cache is per-process — a `WRITE_THROUGH_ATOMIC` write
+> lands in the shared database immediately, but each node keeps serving its *own* cached copy of a
+> key until it reloads it, so nodes drift out of sync. `NONE` removes the cache, so every read
+> reflects the latest state in the shared backend.
 
 ## Flushing and lifecycle
 
@@ -224,14 +232,14 @@ from `getAll()`, so both directions must round-trip.
 ## Advanced: custom backends and serialization
 
 [`BukkitDataStoreBuilder`](store-bukkit.md#the-easy-way-bukkitdatastorebuilder) covers the
-common case. For a custom backend, write policy, executor, or `ObjectMapper` (your own serializers),
+common case. For a custom backend, cache mode, executor, or `ObjectMapper` (your own serializers),
 use `DataStore.builder(backend)` and set only the knobs you care about — everything else falls back
 to the same defaults:
 
 ```java
+import com.crimsonwarpedcraft.cwcommons.store.CacheMode;
 import com.crimsonwarpedcraft.cwcommons.store.DataStore;
 import com.crimsonwarpedcraft.cwcommons.store.SqliteBackend;
-import com.crimsonwarpedcraft.cwcommons.store.WritePolicy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -247,7 +255,7 @@ ObjectMapper mapper = new ObjectMapper()
 
 DataStore store = DataStore.builder(new SqliteBackend(new File(getDataFolder(), "myplugin.db")))
     .name("myplugin")                          // I/O thread name: myplugin-store-io
-    .writePolicy(WritePolicy.CACHE_AND_FLUSH)
+    .cacheMode(CacheMode.CACHE_AND_FLUSH)
     .mapper(mapper)
     .build();
 ```
@@ -259,5 +267,6 @@ DataStore store = DataStore.builder(new SqliteBackend(new File(getDataFolder(), 
 From here you can:
 
 - swap `SqliteBackend` for [`MongoDbBackend`](store-mongo.md);
-- choose `WritePolicy.WRITE_THROUGH_ATOMIC`;
+- choose `CacheMode.WRITE_THROUGH_ATOMIC`, or `CacheMode.NONE` to disable caching for a shared
+  database;
 - register [`Location` / `ItemStack` serializers](store-bukkit.md#storing-bukkit-types) on the mapper.

@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -62,12 +63,46 @@ class DataStoreBuilderTest {
   void writeThroughPolicyWritesImmediately() throws Exception {
     try (DataStore store = DataStore.builder(backend)
         .executor(Runnable::run)
-        .writePolicy(WritePolicy.WRITE_THROUGH_ATOMIC)
+        .cacheMode(CacheMode.WRITE_THROUGH_ATOMIC)
         .build()) {
       Repository<String, String> repo =
           store.repository("ns", String.class, KeySerializers.forString());
       repo.put("k", "v").get();
       verify(backend).save(eq("ns"), eq("k"), any());
     }
+  }
+
+  @Test
+  void cacheModeNoneBypassesReadCache() throws Exception {
+    try (DataStore store = DataStore.builder(backend)
+        .executor(Runnable::run)
+        .cacheMode(CacheMode.NONE)
+        .build()) {
+      Repository<String, String> repo =
+          store.repository("ns", String.class, KeySerializers.forString());
+      repo.get("k").get();
+      repo.get("k").get();
+      // With no cache, every read hits the backend; a cached mode would load only once.
+      verify(backend, times(2)).load("ns", "k");
+    }
+  }
+
+  @Test
+  void cacheModeNoneWritesImmediately() throws Exception {
+    try (DataStore store = DataStore.builder(backend)
+        .executor(Runnable::run)
+        .cacheMode(CacheMode.NONE)
+        .build()) {
+      Repository<String, String> repo =
+          store.repository("ns", String.class, KeySerializers.forString());
+      repo.put("k", "v").get();
+      verify(backend).save(eq("ns"), eq("k"), any());
+    }
+  }
+
+  @Test
+  void nullCacheModeThrowsNpe() {
+    assertThrows(NullPointerException.class,
+        () -> DataStore.builder(backend).cacheMode(null));
   }
 }

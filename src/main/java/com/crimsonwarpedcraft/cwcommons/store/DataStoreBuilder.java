@@ -18,11 +18,11 @@ import java.util.concurrent.Executors;
  * <pre>{@code
  * DataStore store = DataStore.builder(new SqliteBackend(file))
  *     .name("warps")
- *     .writePolicy(WritePolicy.CACHE_AND_FLUSH)
+ *     .cacheMode(CacheMode.CACHE_AND_FLUSH)
  *     .build();
  * }</pre>
  *
- * <p>By default the store buffers writes ({@link WritePolicy#CACHE_AND_FLUSH}), dispatches I/O on a
+ * <p>By default the store buffers writes ({@link CacheMode#CACHE_AND_FLUSH}), dispatches I/O on a
  * single daemon thread named {@code <name>-store-io}, and closes the backend when the store is
  * closed. Call {@link #closeBackend(boolean) closeBackend(false)} to retain ownership of a backend
  * shared elsewhere. Bukkit plugins should prefer {@code BukkitDataStoreBuilder}, which pre-seeds a
@@ -34,7 +34,7 @@ public class DataStoreBuilder {
 
   private final StorageBackend backend;
   private String name = "datastore";
-  private WritePolicy writePolicy = WritePolicy.CACHE_AND_FLUSH;
+  private CacheMode cacheMode = CacheMode.CACHE_AND_FLUSH;
   private ObjectMapper mapper;
   private Executor executor;
   private boolean closeBackend = true;
@@ -63,13 +63,17 @@ public class DataStoreBuilder {
   }
 
   /**
-   * Sets the write policy applied to every namespace.
+   * Sets the cache mode applied to every namespace.
    *
-   * @param writePolicy when writes are persisted to the backend
+   * <p>{@link CacheMode#CACHE_AND_FLUSH} (the default) and {@link CacheMode#WRITE_THROUGH_ATOMIC}
+   * cache reads; {@link CacheMode#NONE} disables caching so every read hits the backend fresh —
+   * use it when several servers share one database.
+   *
+   * @param cacheMode whether and how the store caches
    * @return this builder
    */
-  public DataStoreBuilder writePolicy(WritePolicy writePolicy) {
-    this.writePolicy = Objects.requireNonNull(writePolicy);
+  public DataStoreBuilder cacheMode(CacheMode cacheMode) {
+    this.cacheMode = Objects.requireNonNull(cacheMode);
     return this;
   }
 
@@ -117,11 +121,15 @@ public class DataStoreBuilder {
    * @return a ready-to-use store
    */
   public DataStore build() {
-    CachingBackend caching = new CachingBackend(backend, writePolicy);
     Executor exec = (executor != null) ? executor : defaultExecutor(name);
     ObjectMapper json = (mapper != null) ? mapper : defaultMapper();
+    StorageBackend effective = switch (cacheMode) {
+      case NONE -> backend;
+      case CACHE_AND_FLUSH -> new CachingBackend(backend, WritePolicy.CACHE_AND_FLUSH);
+      case WRITE_THROUGH_ATOMIC -> new CachingBackend(backend, WritePolicy.WRITE_THROUGH_ATOMIC);
+    };
     return new ConcurrentDataStore(
-        new ThreadedRepositoryBuilder(caching, exec, json, closeBackend));
+        new ThreadedRepositoryBuilder(effective, exec, json, closeBackend));
   }
 
   private static Executor defaultExecutor(String name) {

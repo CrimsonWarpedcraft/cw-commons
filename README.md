@@ -45,8 +45,9 @@ The three areas below are independent — depend on one, two, or all of them. Ea
   are buffered in memory and flushed off-thread.
 - **Pluggable backends** — `SqliteBackend` is bundled and zero-config; `MongoDbBackend` is a drop-in
   alternative behind the same API (needs the optional MongoDB driver).
-- **`WritePolicy`** — `CACHE_AND_FLUSH` (default) batches writes until a flush; `WRITE_THROUGH_ATOMIC`
-  persists every write immediately, for crash-safety or a database shared across nodes.
+- **`CacheMode`** — `CACHE_AND_FLUSH` (default) batches writes until a flush; `WRITE_THROUGH_ATOMIC`
+  persists every write immediately for crash-safety; `NONE` disables caching entirely so a database
+  shared across servers stays coherent (every read hits the backend fresh).
 - **`KeySerializers`** — UUID and String keys out of the box; implement `KeySerializer<K>` for any
   other key type.
 - **Bukkit helpers** — `PlayerDataManager` (flushes a player's data on `PlayerQuitEvent`),

@@ -1,7 +1,10 @@
 package com.crimsonwarpedcraft.cwcommons.store;
 
 /**
- * Determines when writes are persisted to the storage backend.
+ * Determines when a {@code CachingBackend} persists writes to its delegate backend.
+ *
+ * <p>This is the low-level policy the cache is built with. Callers usually pick a
+ * {@link CacheMode} on {@link DataStoreBuilder} instead, which selects the matching policy.
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */
@@ -17,8 +20,9 @@ public enum WritePolicy {
   /**
    * Persists each write immediately and atomically through to the backend.
    *
-   * <p>Use this when data must be durable across nodes or process crashes without waiting
-   * for a flush cycle.
+   * <p>Use this when data must survive a process crash without waiting for a flush cycle. The
+   * cache still serves local reads, so it does not make a shared database coherent across
+   * servers — for that, disable caching with {@link CacheMode#NONE}.
    */
   WRITE_THROUGH_ATOMIC
 }

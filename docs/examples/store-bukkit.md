@@ -183,7 +183,7 @@ public record HomeData(Location home, ItemStack icon) {}
 
 `BukkitDataStoreBuilder` bundles the four (de)serializers as a single Jackson module, `BukkitModule`.
 If you build the store with [`DataStore.builder`](store.md#advanced-custom-backends-and-serialization)
-— to pick a different write policy, executor, or backend — register that module on your mapper
+— to pick a different cache mode, executor, or backend — register that module on your mapper
 instead of wiring the serializers up one by one:
 
 ```java
