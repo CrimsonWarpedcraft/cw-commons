@@ -59,21 +59,21 @@ repositories {
 val mockitoAgent by configurations.creating
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:26.1.2.build.72-stable")
+    compileOnly("io.papermc.paper:paper-api:26.1.2.build.74-stable")
     compileOnly("dev.jorel:commandapi-paper-shade:11.2.0")
     compileOnly("com.github.spotbugs:spotbugs-annotations:4.10.2")
     compileOnly("org.mongodb:mongodb-driver-sync:5.8.0")
     api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.1")
-    api("org.hibernate.validator:hibernate-validator:9.1.1.Final")
+    api("org.hibernate.validator:hibernate-validator:9.1.2.Final")
     implementation("org.xerial:sqlite-jdbc:3.53.2.0")
     "spotbugsPlugins"("com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0")
     testCompileOnly("com.github.spotbugs:spotbugs-annotations:4.10.2")
-    testImplementation("io.papermc.paper:paper-api:26.1.2.build.72-stable")
+    testImplementation("io.papermc.paper:paper-api:26.1.2.build.74-stable")
     testImplementation("dev.jorel:commandapi-paper-shade:11.2.0")
-    testImplementation("org.junit.jupiter:junit-jupiter:6.1.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.1.2")
     testImplementation("org.mongodb:mongodb-driver-sync:5.8.0")
     testImplementation("org.mockito:mockito-core:5.23.0")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.1")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.2")
     mockitoAgent("org.mockito:mockito-core:5.23.0") { isTransitive = false }
 }
 
