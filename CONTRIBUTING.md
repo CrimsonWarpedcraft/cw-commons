@@ -50,7 +50,7 @@ gradlew.bat build      # Windows
 ```
 
 `build` compiles the project, runs **Checkstyle** (Google Java Style, 100-character lines),
-**SpotBugs + FindSecBugs**, and the **JUnit** test suite. The build is configured with
+**SpotBugs + FindSecBugs**, and the **JUnit unit test** suite. The build is configured with
 `maxWarnings = 0`, so **every warning must be fixed** before a PR can merge.
 
 ```bash
@@ -59,14 +59,39 @@ gradlew.bat build      # Windows
 ./gradlew release -Pver=v1.0.0                                   # build the release + javadoc jars
 ```
 
+Integration tests are a separate, explicit task. Before running them, provision a MongoDB instance
+and grant the configured database permission to create and drop test collections. The tests do not
+start services, manage Docker, create/drop databases, or manage users.
+
+```bash
+# macOS / Linux
+export CW_COMMONS_MONGO_URI=mongodb://localhost:27017
+export CW_COMMONS_MONGO_DATABASE=cw_commons_integration
+./gradlew integrationTest
+```
+
+```powershell
+# Windows PowerShell
+$env:CW_COMMONS_MONGO_URI = "mongodb://localhost:27017"
+$env:CW_COMMONS_MONGO_DATABASE = "cw_commons_integration"
+gradlew.bat integrationTest
+```
+
+Invoking `integrationTest` without both variables is an error. CI provisions MongoDB outside the
+test process and supplies these variables automatically.
+
 > **Windows / OneDrive:** if `gradlew build` fails with an access-denied error on `build/`, see the
 > workaround in [`CLAUDE.md`](CLAUDE.md#windows--onedrive-quirk).
 
 ## Code & test conventions
 
 - **Javadoc** is required on public API; package-private classes are exempt.
-- **No integration tests.** Mock `StorageBackend` with `mock(StorageBackend.class)`; real I/O is
-  only allowed inside `SqliteBackendTest`. Use `MockedStatic` for Bukkit/static calls.
+- Keep unit tests isolated from external services. Put real SQLite, MongoDB, Jackson file-binding,
+  and cross-component coverage in `src/integrationTest`.
+- Integration tests may create and clean up their own tables, collections, and documents, but must
+  not own the database server, container, database, or user lifecycle.
+- Use `MockedStatic` only at unavoidable Bukkit/static boundaries; integration tests do not require
+  MockBukkit.
 - See the **Test design rules** and **Checkstyle notes** sections of [`CLAUDE.md`](CLAUDE.md) for
   the full detail — please skim them before adding tests.
 

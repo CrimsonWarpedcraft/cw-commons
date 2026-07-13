@@ -165,10 +165,14 @@ request.** A good place to start is the
 [`good first issue`](https://github.com/CrimsonWarpedcraft/cw-commons/issues?q=is%3Aopen+label%3A%22good+first+issue%22)).
 
 ```bash
-# Build, run static analysis (Checkstyle + SpotBugs), and run all tests
+# Build, run static analysis (Checkstyle + SpotBugs), and run unit tests
 ./gradlew build        # macOS / Linux / Unix
 gradlew.bat build      # Windows
 ```
+
+The external-service integration suite is intentionally separate from `build`. It requires a
+pre-provisioned MongoDB service and explicit connection environment variables; see
+**[CONTRIBUTING.md](CONTRIBUTING.md#building--checks)** for setup and the `integrationTest` command.
 
 See **[CONTRIBUTING.md](CONTRIBUTING.md)** for the full workflow — the fork-and-PR steps, the
 Conventional Commit format we use, the local build and checks, and how to preview the docs.

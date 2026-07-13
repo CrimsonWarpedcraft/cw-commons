@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build commands
 
 ```powershell
-# Full build: compiles, runs Checkstyle + SpotBugs, runs all tests
+# Full build: compiles, runs Checkstyle + SpotBugs, runs unit tests
 ./gradlew build          # macOS/Linux
 gradlew.bat build        # Windows
 
@@ -16,6 +16,11 @@ gradlew.bat build        # Windows
 # Single test class
 ./gradlew test --tests "com.crimsonwarpedcraft.cwcommons.store.ConcurrentDataStoreTest"
 
+# Integration tests (requires a pre-provisioned MongoDB service)
+$env:CW_COMMONS_MONGO_URI = "mongodb://localhost:27017"
+$env:CW_COMMONS_MONGO_DATABASE = "cw_commons_integration"
+gradlew.bat integrationTest
+
 # Release JAR + Javadoc jar (outputs build/libs/CwCommons.jar and CwCommons-<ver>-javadoc.jar)
 ./gradlew release -Pver=v1.0.0
 
@@ -23,8 +28,9 @@ gradlew.bat build        # Windows
 ./gradlew javadoc
 ```
 
-`build` runs Checkstyle (Google Java Style, 100-char line limit, zero warnings) and SpotBugs
-(with FindSecBugs) in addition to tests. Fix every warning — `maxWarnings = 0`.
+`build` runs Checkstyle (Google Java Style, 100-char line limit, zero warnings), SpotBugs
+(with FindSecBugs), and unit tests. Fix every warning — `maxWarnings = 0`. Integration tests are
+an explicit task and are not part of `build` or `check`.
 
 ## Documentation site
 
@@ -52,7 +58,7 @@ bundle exec jekyll serve            # http://localhost:4000
 
 ## Architecture
 
-Java 25, Gradle 9.5.1 (Kotlin DSL, `java-library` plugin), distributed via JitPack as
+Java 25, Gradle 9.6.1 (Kotlin DSL, `java-library` plugin), distributed via JitPack as
 `com.github.CrimsonWarpedcraft:cw-commons:VERSION`.
 
 The packages below, each with its own responsibility:
@@ -115,17 +121,21 @@ subclass) builds a `ConfigManager` with `BukkitModule` registered, so config cla
 
 ## Test design rules
 
-- **No integration tests.** Real I/O is only allowed inside `SqliteBackendTest` (in-memory SQLite,
-  plus one `@TempDir`-backed store creation test).
-  Every other test mocks `StorageBackend` with `mock(StorageBackend.class)`.
-- Mock `StorageBackend` and stub `load`/`loadAll` to return `Optional.empty()` / `new HashMap<>()`
-  in `@BeforeEach`. `CachingBackendTest` calls `CachingBackend` directly (no executor needed).
-  `ThreadedRepositoryTest` constructs `ThreadedRepository` directly with `Runnable::run`.
-- Use `MockedStatic<Bukkit>` and `MockedStatic<ItemStack>` for static calls in the Bukkit packages
-  (`bukkit/serialization`, `store/bukkit`, `config/bukkit`), and `MockedStatic<MongoClients>` in
-  `MongoDbBackendTest` to intercept `MongoClients.create()` during construction. Requires the
-  Mockito inline agent already configured in `build.gradle.kts`.
-- MongoDB driver is on `testImplementation` (not just `compileOnly`) to enable static mocking.
+- Unit tests live in `src/test`, run via `test`/`build`, and must not depend on external services.
+  Mock collaborators when the test is specifically checking delegation, caching, scheduling, or an
+  error boundary.
+- Integration tests live in `src/integrationTest` and run only via `integrationTest`. They exercise
+  real SQLite files, Jackson YAML/JSON binding, Hibernate validation, and a configured MongoDB
+  service through the public APIs.
+- Integration tests never provision or administer external services. Running `integrationTest`
+  requires `CW_COMMONS_MONGO_URI` and `CW_COMMONS_MONGO_DATABASE`; missing configuration fails the
+  task. CI owns its MongoDB service lifecycle.
+- MongoDB tests use unique collection names and only clean up collections created by that test.
+  They must not create/drop databases, manage users, or start/stop MongoDB or Docker.
+- Use `MockedStatic<Bukkit>` and related boundary mocks where Paper exposes only global/static
+  lookups. Do not introduce MockBukkit unless the test truly requires a running server model.
+- The MongoDB driver remains on `testImplementation` (not just `compileOnly`), which the integration
+  source set inherits for runtime access.
 
 ## Shadow JAR
 

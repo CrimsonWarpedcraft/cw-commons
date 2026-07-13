@@ -14,7 +14,7 @@ gradlew.bat build          # Windows
 ```
 
 Runs compilation, Checkstyle (Google Java Style, 100-char limit, `maxWarnings = 0`), SpotBugs
-with FindSecBugs, and all tests. Fix every warning — the build fails on the first one.
+with FindSecBugs, and unit tests. Fix every warning — the build fails on the first one.
 
 ## Verify
 
@@ -22,11 +22,22 @@ with FindSecBugs, and all tests. Fix every warning — the build fails on the fi
 gradlew.bat test
 ```
 
-All tests pass. Subset by class:
+All unit tests pass. Subset by class:
 
 ```powershell
 gradlew.bat test --tests "com.crimsonwarpedcraft.cwcommons.store.ConcurrentDataStoreTest"
 ```
+
+Integration tests are manual and require an externally provisioned MongoDB service:
+
+```powershell
+$env:CW_COMMONS_MONGO_URI = "mongodb://localhost:27017"
+$env:CW_COMMONS_MONGO_DATABASE = "cw_commons_integration"
+gradlew.bat integrationTest
+```
+
+The tests must not start/stop MongoDB or Docker, create/drop databases, or manage users. They may
+create and clean up their own uniquely named collections.
 
 ## Release JAR
 
@@ -64,10 +75,9 @@ Keep these in sync with the current state of the project:
   attrib -R build /S /D
   Remove-Item -Recurse -Force build
   ```
-- **`@TempDir` file-lock on Windows** — `SqliteBackendTest` relies on the full close chain
+- **`@TempDir` file-lock on Windows** — `SqliteDataStoreIntegrationTest` relies on the full close chain
   (`DataStore.close()` → `CachingBackend.close()` → `SqliteBackend.close()`) releasing the
   SQLite file lock before `@TempDir` cleanup runs. A failing test here means the close chain
   is broken, not a test framework issue.
-- **MongoDB driver on `testImplementation`** — the MongoDB driver is added to `testImplementation`
-  (not `compileOnly`) so `MongoDbBackendTest` can use `MockedStatic<MongoClients>` to intercept
-  construction without a real MongoDB server.
+- **MongoDB driver on `testImplementation`** — the integration source set inherits this
+  configuration so `MongoDataStoreIntegrationTest` can connect to the configured service.
