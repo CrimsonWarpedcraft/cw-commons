@@ -9,7 +9,9 @@ data storage** — behind small, well-tested APIs, so each plugin can focus on i
 [![Java](https://img.shields.io/badge/Java-25-orange)](https://adoptium.net/)
 [![Documentation](https://img.shields.io/badge/docs-cw--commons.crimsonwarpedcraft.com-blue)](https://cw-commons.crimsonwarpedcraft.com)
 [![License: GPL v3](https://img.shields.io/github/license/CrimsonWarpedcraft/cw-commons)](LICENSE)
-[![Discord](https://img.shields.io/badge/Discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/5XMmeV6EtJ)
+
+
+[![](https://dcbadge.limes.pink/api/server/5XMmeV6EtJ)](https://discord.gg/5XMmeV6EtJ)
 
 📖 **Full documentation, guides, and API reference:**
 [cw-commons.crimsonwarpedcraft.com](https://cw-commons.crimsonwarpedcraft.com)
