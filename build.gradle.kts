@@ -70,7 +70,7 @@ dependencies {
     testCompileOnly("com.github.spotbugs:spotbugs-annotations:4.10.2")
     testImplementation("io.papermc.paper:paper-api:26.1.2.build.72-stable")
     testImplementation("dev.jorel:commandapi-paper-shade:11.2.0")
-    testImplementation("org.junit.jupiter:junit-jupiter:6.1.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.1.2")
     testImplementation("org.mongodb:mongodb-driver-sync:5.8.0")
     testImplementation("org.mockito:mockito-core:5.23.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.1")
