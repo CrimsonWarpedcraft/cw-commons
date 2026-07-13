@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.MockedStatic;
 
-class BukkitConfigManagerBuilderTest {
+class BukkitConfigManagerIntegrationTest {
 
   record LocationConfig(Location spawn) implements Config {}
 
@@ -32,16 +32,16 @@ class BukkitConfigManagerBuilderTest {
     try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
       bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
 
-      LocationConfig cfg =
+      LocationConfig config =
           new BukkitConfigManagerBuilder().build().load(file.toFile(), LocationConfig.class);
 
-      assertNotNull(cfg.spawn());
-      assertEquals(world, cfg.spawn().getWorld());
-      assertEquals(0.5, cfg.spawn().getX());
-      assertEquals(64.0, cfg.spawn().getY());
-      assertEquals(0.5, cfg.spawn().getZ());
-      assertEquals(0.0f, cfg.spawn().getYaw(), 0.001f);   // yaw omitted -> default 0
-      assertEquals(0.0f, cfg.spawn().getPitch(), 0.001f); // pitch omitted -> default 0
+      assertNotNull(config.spawn());
+      assertEquals(world, config.spawn().getWorld());
+      assertEquals(0.5, config.spawn().getX());
+      assertEquals(64.0, config.spawn().getY());
+      assertEquals(0.5, config.spawn().getZ());
+      assertEquals(0.0f, config.spawn().getYaw(), 0.001f);
+      assertEquals(0.0f, config.spawn().getPitch(), 0.001f);
     }
   }
 
@@ -62,15 +62,16 @@ class BukkitConfigManagerBuilderTest {
   void loadsLocationWithRequiredOrientation(@TempDir Path dir) throws IOException {
     Path file = dir.resolve("config.yml");
     Files.writeString(file,
-        "spawn:\n  world: world\n  x: 0.5\n  y: 64.0\n  z: 0.5\n  yaw: 90.0\n  pitch: -30.0\n");
+        "spawn:\n  world: world\n  x: 0.5\n  y: 64.0\n  z: 0.5\n"
+            + "  yaw: 90.0\n  pitch: -30.0\n");
     try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
       bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(mock(World.class));
 
-      OrientedConfig cfg =
+      OrientedConfig config =
           new BukkitConfigManagerBuilder().build().load(file.toFile(), OrientedConfig.class);
 
-      assertEquals(90.0f, cfg.spawn().getYaw(), 0.001f);
-      assertEquals(-30.0f, cfg.spawn().getPitch(), 0.001f);
+      assertEquals(90.0f, config.spawn().getYaw(), 0.001f);
+      assertEquals(-30.0f, config.spawn().getPitch(), 0.001f);
     }
   }
 }

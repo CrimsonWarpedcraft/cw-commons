@@ -47,3 +47,38 @@ jobs:
         with:
           name: ${{ matrix.os }} Java ${{ matrix.java }} test results
           path: ${{ github.workspace }}/build/reports/
+
+  integration-test:
+    name: Run integration tests
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:8.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      CW_COMMONS_MONGO_URI: mongodb://localhost:27017
+      CW_COMMONS_MONGO_DATABASE: cw_commons_integration
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Common Setup
+        uses: ./.github/actions/common-setup
+        with:
+          java-version: 25
+
+      - name: Run integration tests
+        run: ./gradlew integrationTest --info
+
+      - name: Upload integration test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: Integration test results
+          path: ${{ github.workspace }}/build/reports/tests/integrationTest/

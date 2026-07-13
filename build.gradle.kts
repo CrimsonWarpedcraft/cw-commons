@@ -57,6 +57,12 @@ repositories {
 }
 
 val mockitoAgent by configurations.creating
+val integrationTestSourceSet = sourceSets.create("integrationTest")
+
+configurations[integrationTestSourceSet.implementationConfigurationName]
+    .extendsFrom(configurations.testImplementation.get())
+configurations[integrationTestSourceSet.runtimeOnlyConfigurationName]
+    .extendsFrom(configurations.testRuntimeOnly.get())
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:26.1.2.build.74-stable")
@@ -75,11 +81,37 @@ dependencies {
     testImplementation("org.mockito:mockito-core:5.23.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.2")
     mockitoAgent("org.mockito:mockito-core:5.23.0") { isTransitive = false }
+    add(integrationTestSourceSet.implementationConfigurationName, sourceSets.main.get().output)
 }
 
 tasks.test {
     useJUnitPlatform()
     jvmArgs("-javaagent:${mockitoAgent.asPath}")
+}
+
+tasks.register<Test>("integrationTest") {
+    description = "Runs tests against pre-provisioned external services."
+    group = "verification"
+    testClassesDirs = integrationTestSourceSet.output.classesDirs
+    classpath = integrationTestSourceSet.runtimeClasspath
+    useJUnitPlatform()
+    jvmArgs("-javaagent:${mockitoAgent.asPath}")
+    shouldRunAfter(tasks.test)
+
+    doFirst {
+        val requiredVariables = listOf(
+            "CW_COMMONS_MONGO_URI",
+            "CW_COMMONS_MONGO_DATABASE"
+        )
+        val missingVariables = requiredVariables.filter {
+            providers.environmentVariable(it).orNull.isNullOrBlank()
+        }
+        if (missingVariables.isNotEmpty()) {
+            throw GradleException(
+                "integrationTest requires environment variables: ${missingVariables.joinToString()}"
+            )
+        }
+    }
 }
 
 tasks.javadoc {
