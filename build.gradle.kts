@@ -56,7 +56,7 @@ repositories {
     mavenCentral()
 }
 
-val mockitoAgent by configurations.creating
+val mockitoAgent = configurations.create("mockitoAgent")
 val integrationTestSourceSet = sourceSets.create("integrationTest")
 
 configurations[integrationTestSourceSet.implementationConfigurationName]
@@ -142,7 +142,7 @@ tasks.javadoc {
 // Bundled as a GitHub Release asset so every version's API docs stay downloadable, even though
 // the published site (docs.yml) only serves the latest. Standalone (not wired into `build`) so
 // normal builds stay fast; the `release` task pulls it into build/libs/ for upload.
-val javadocJar by tasks.registering(Jar::class) {
+val javadocJar = tasks.register<Jar>("javadocJar") {
     archiveClassifier.set("javadoc")
     from(tasks.javadoc)
 }
