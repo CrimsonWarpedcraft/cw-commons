@@ -148,7 +148,7 @@ val javadocJar = tasks.register<Jar>("javadocJar") {
 }
 
 checkstyle {
-    toolVersion = "13.6.0"
+    toolVersion = "13.9.0"
     maxWarnings = 0
 }
 
