@@ -66,7 +66,7 @@ configurations[integrationTestSourceSet.runtimeOnlyConfigurationName]
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:26.2.build.87-stable")
-    compileOnly("dev.jorel:commandapi-paper-shade:11.2.0")
+    compileOnly("dev.jorel:commandapi-paper-shade:12.0.0")
     compileOnly("com.github.spotbugs:spotbugs-annotations:4.10.3")
     compileOnly("org.mongodb:mongodb-driver-sync:5.9.1")
     api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.1")
@@ -75,7 +75,7 @@ dependencies {
     "spotbugsPlugins"("com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0")
     testCompileOnly("com.github.spotbugs:spotbugs-annotations:4.10.3")
     testImplementation("io.papermc.paper:paper-api:26.2.build.87-stable")
-    testImplementation("dev.jorel:commandapi-paper-shade:11.2.0")
+    testImplementation("dev.jorel:commandapi-paper-shade:12.0.0")
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.2")
     testImplementation("org.mongodb:mongodb-driver-sync:5.9.1")
     testImplementation("org.mockito:mockito-core:5.23.0")
