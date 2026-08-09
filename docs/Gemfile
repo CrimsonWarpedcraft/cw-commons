@@ -2,7 +2,7 @@ source "https://rubygems.org"
 
 gem "jekyll", "~> 4.3"
 gem "just-the-docs", "~> 0.10"
-gem "jekyll-relative-links", "~> 0.7"
+gem "jekyll-relative-links", "~> 0.8"
 
 # Windows / JRuby need an explicit timezone library for local `jekyll serve`.
 platforms :mingw, :x64_mingw, :mswin, :jruby do
