@@ -7,7 +7,7 @@ import org.gradle.external.javadoc.StandardJavadocDocletOptions
 
 plugins {
     checkstyle
-    id("com.github.spotbugs") version "6.5.9"
+    id("com.github.spotbugs") version "6.5.10"
     id("com.gradleup.shadow") version "9.6.1"
     `java-library`
     `maven-publish`
