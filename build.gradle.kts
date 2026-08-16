@@ -79,7 +79,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.2")
     testImplementation("org.mongodb:mongodb-driver-sync:5.9.1")
     testImplementation("org.mockito:mockito-core:5.23.0")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.3")
     mockitoAgent("org.mockito:mockito-core:5.23.0") { isTransitive = false }
     add(integrationTestSourceSet.implementationConfigurationName, sourceSets.main.get().output)
 }
