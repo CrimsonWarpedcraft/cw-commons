@@ -68,7 +68,7 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:26.2.build.112-stable")
     compileOnly("dev.jorel:commandapi-paper-shade:12.0.0")
     compileOnly("com.github.spotbugs:spotbugs-annotations:4.10.3")
-    compileOnly("org.mongodb:mongodb-driver-sync:5.9.1")
+    compileOnly("org.mongodb:mongodb-driver-sync:5.9.2")
     api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.1")
     api("org.hibernate.validator:hibernate-validator:9.1.3.Final")
     implementation("org.xerial:sqlite-jdbc:3.53.2.1")
@@ -77,7 +77,7 @@ dependencies {
     testImplementation("io.papermc.paper:paper-api:26.2.build.112-stable")
     testImplementation("dev.jorel:commandapi-paper-shade:12.0.0")
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
-    testImplementation("org.mongodb:mongodb-driver-sync:5.9.1")
+    testImplementation("org.mongodb:mongodb-driver-sync:5.9.2")
     testImplementation("org.mockito:mockito-core:5.23.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.3")
     mockitoAgent("org.mockito:mockito-core:5.23.0") { isTransitive = false }
@@ -133,7 +133,7 @@ tasks.javadoc {
         links(
             "https://docs.oracle.com/en/java/javase/25/docs/api/",
             "https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-databind/2.22.0/",
-            "https://javadoc.io/doc/org.mongodb/mongodb-driver-sync/5.9.1/",
+            "https://javadoc.io/doc/org.mongodb/mongodb-driver-sync/5.9.2/",
             "https://javadoc.io/doc/jakarta.validation/jakarta.validation-api/3.1.1/"
         )
     }
