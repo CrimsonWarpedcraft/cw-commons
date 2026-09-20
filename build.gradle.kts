@@ -65,7 +65,7 @@ configurations[integrationTestSourceSet.runtimeOnlyConfigurationName]
     .extendsFrom(configurations.testRuntimeOnly.get())
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:26.2.build.123-stable")
+    compileOnly("io.papermc.paper:paper-api:26.2.build.124-stable")
     compileOnly("dev.jorel:commandapi-paper-shade:12.0.0")
     compileOnly("com.github.spotbugs:spotbugs-annotations:4.10.4")
     compileOnly("org.mongodb:mongodb-driver-sync:5.11.1")
@@ -74,7 +74,7 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.53.4.0")
     "spotbugsPlugins"("com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0")
     testCompileOnly("com.github.spotbugs:spotbugs-annotations:4.10.4")
-    testImplementation("io.papermc.paper:paper-api:26.2.build.123-stable")
+    testImplementation("io.papermc.paper:paper-api:26.2.build.124-stable")
     testImplementation("dev.jorel:commandapi-paper-shade:12.0.0")
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
     testImplementation("org.mongodb:mongodb-driver-sync:5.11.1")
