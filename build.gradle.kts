@@ -78,9 +78,9 @@ dependencies {
     testImplementation("dev.jorel:commandapi-paper-shade:12.0.0")
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
     testImplementation("org.mongodb:mongodb-driver-sync:5.11.1")
-    testImplementation("org.mockito:mockito-core:5.23.0")
+    testImplementation("org.mockito:mockito-core:5.24.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.3")
-    mockitoAgent("org.mockito:mockito-core:5.23.0") { isTransitive = false }
+    mockitoAgent("org.mockito:mockito-core:5.24.0") { isTransitive = false }
     add(integrationTestSourceSet.implementationConfigurationName, sourceSets.main.get().output)
 }
 
