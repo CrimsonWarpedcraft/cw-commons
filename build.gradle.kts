@@ -69,7 +69,7 @@ dependencies {
     compileOnly("dev.jorel:commandapi-paper-shade:12.0.0")
     compileOnly("com.github.spotbugs:spotbugs-annotations:4.10.4")
     compileOnly("org.mongodb:mongodb-driver-sync:5.12.0")
-    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.2")
+    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.3")
     api("org.hibernate.validator:hibernate-validator:9.1.4.Final")
     implementation("org.xerial:sqlite-jdbc:3.53.4.0")
     "spotbugsPlugins"("com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0")
