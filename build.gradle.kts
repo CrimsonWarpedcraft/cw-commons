@@ -66,7 +66,11 @@ configurations[integrationTestSourceSet.runtimeOnlyConfigurationName]
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:26.2.build.129-stable")
-    compileOnly("dev.jorel:commandapi-paper-shade:12.1.0")
+    compileOnly("dev.jorel:commandapi-paper-shade:12.1.0") {
+        // Upstream metadata references unpublished modules already bundled in this JAR.
+        // https://github.com/CommandAPI/CommandAPI/issues/704
+        isTransitive = false
+    }
     compileOnly("com.github.spotbugs:spotbugs-annotations:4.10.4")
     compileOnly("org.mongodb:mongodb-driver-sync:5.13.0")
     api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.3")
@@ -75,7 +79,11 @@ dependencies {
     "spotbugsPlugins"("com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0")
     testCompileOnly("com.github.spotbugs:spotbugs-annotations:4.10.4")
     testImplementation("io.papermc.paper:paper-api:26.2.build.129-stable")
-    testImplementation("dev.jorel:commandapi-paper-shade:12.1.0")
+    testImplementation("dev.jorel:commandapi-paper-shade:12.1.0") {
+        // Upstream metadata references unpublished modules already bundled in this JAR.
+        // https://github.com/CommandAPI/CommandAPI/issues/704
+        isTransitive = false
+    }
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
     testImplementation("org.mongodb:mongodb-driver-sync:5.13.0")
     testImplementation("org.mockito:mockito-core:5.24.0")
