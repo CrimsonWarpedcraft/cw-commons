@@ -124,8 +124,8 @@ tasks.register<Test>("integrationTest") {
 
 tasks.javadoc {
     title = "CwCommons ${project.version} API"
-    // A lint nit must never fail the docs release job; -missing also avoids noise from
-    // package-private records/lambdas. Real reference errors still surface as warnings.
+    // Keep documentation errors visible without failing the release; -missing suppresses
+    // missing-documentation lint messages.
     isFailOnError = false
     (options as StandardJavadocDocletOptions).apply {
         windowTitle = "CwCommons ${project.version} API"
@@ -135,13 +135,13 @@ tasks.javadoc {
         charSet = "UTF-8"
         source = "25"
         addStringOption("Xdoclint:all,-missing", "-quiet")
-        // Online -link targets: unreachable element-lists only warn (types render unlinked),
-        // so a wrong/missing target never produces broken hyperlinks. Paper/CommandAPI omitted
-        // (their hosted element-lists are unstable).
+        // Online -link targets need an accessible element-list or package-list. Fetch failures
+        // are reported as errors and leave types unlinked. Paper/CommandAPI are omitted
+        // because their hosted element-lists are unstable.
         links(
             "https://docs.oracle.com/en/java/javase/25/docs/api/",
             "https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-databind/2.22.0/",
-            "https://javadoc.io/doc/org.mongodb/mongodb-driver-sync/5.13.0/",
+            "https://mongodb.github.io/mongo-java-driver/5.13/apidocs/driver-sync/",
             "https://javadoc.io/doc/jakarta.validation/jakarta.validation-api/3.1.1/"
         )
     }
@@ -185,6 +185,10 @@ tasks.withType<SpotBugsTask>().configureEach {
 
 tasks.named<ShadowJar>("shadowJar") {
     archiveClassifier.set("")
+    // Preserve duplicate service descriptors so the transformer can merge every provider.
+    filesMatching("META-INF/services/**") {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
     mergeServiceFiles()
     exclude("com/fasterxml/**")
     exclude("org/yaml/**")
