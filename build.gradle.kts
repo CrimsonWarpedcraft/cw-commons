@@ -71,13 +71,13 @@ dependencies {
         // https://github.com/CommandAPI/CommandAPI/issues/704
         isTransitive = false
     }
-    compileOnly("com.github.spotbugs:spotbugs-annotations:4.10.4")
+    compileOnly("com.github.spotbugs:spotbugs-annotations:4.10.5")
     compileOnly("org.mongodb:mongodb-driver-sync:5.13.0")
     api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.3")
     api("org.hibernate.validator:hibernate-validator:9.1.5.Final")
     implementation("org.xerial:sqlite-jdbc:3.53.4.0")
     "spotbugsPlugins"("com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0")
-    testCompileOnly("com.github.spotbugs:spotbugs-annotations:4.10.4")
+    testCompileOnly("com.github.spotbugs:spotbugs-annotations:4.10.5")
     testImplementation("io.papermc.paper:paper-api:26.3.build.191-stable")
     testImplementation("dev.jorel:commandapi-paper-shade:12.1.0") {
         // Upstream metadata references unpublished modules already bundled in this JAR.
