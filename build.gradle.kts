@@ -75,7 +75,7 @@ dependencies {
     compileOnly("org.mongodb:mongodb-driver-sync:5.13.0")
     api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.3")
     api("org.hibernate.validator:hibernate-validator:9.1.5.Final")
-    implementation("org.xerial:sqlite-jdbc:3.53.4.0")
+    implementation("org.xerial:sqlite-jdbc:3.54.1.0")
     "spotbugsPlugins"("com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0")
     testCompileOnly("com.github.spotbugs:spotbugs-annotations:4.10.4")
     testImplementation("io.papermc.paper:paper-api:26.3.build.191-stable")
