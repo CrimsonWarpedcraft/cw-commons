@@ -65,7 +65,7 @@ configurations[integrationTestSourceSet.runtimeOnlyConfigurationName]
     .extendsFrom(configurations.testRuntimeOnly.get())
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:26.3.build.191-stable")
+    compileOnly("io.papermc.paper:paper-api:26.3.build.230-stable")
     compileOnly("dev.jorel:commandapi-paper-shade:12.1.0") {
         // Upstream metadata references unpublished modules already bundled in this JAR.
         // https://github.com/CommandAPI/CommandAPI/issues/704
@@ -78,7 +78,7 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.53.4.0")
     "spotbugsPlugins"("com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0")
     testCompileOnly("com.github.spotbugs:spotbugs-annotations:4.10.4")
-    testImplementation("io.papermc.paper:paper-api:26.3.build.191-stable")
+    testImplementation("io.papermc.paper:paper-api:26.3.build.230-stable")
     testImplementation("dev.jorel:commandapi-paper-shade:12.1.0") {
         // Upstream metadata references unpublished modules already bundled in this JAR.
         // https://github.com/CommandAPI/CommandAPI/issues/704
