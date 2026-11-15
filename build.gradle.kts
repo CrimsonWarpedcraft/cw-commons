@@ -72,7 +72,7 @@ dependencies {
         isTransitive = false
     }
     compileOnly("com.github.spotbugs:spotbugs-annotations:4.10.5")
-    compileOnly("org.mongodb:mongodb-driver-sync:5.13.0")
+    compileOnly("org.mongodb:mongodb-driver-sync:5.14.0")
     api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.4")
     api("org.hibernate.validator:hibernate-validator:9.1.5.Final")
     implementation("org.xerial:sqlite-jdbc:3.54.1.0")
@@ -85,7 +85,7 @@ dependencies {
         isTransitive = false
     }
     testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
-    testImplementation("org.mongodb:mongodb-driver-sync:5.13.0")
+    testImplementation("org.mongodb:mongodb-driver-sync:5.14.0")
     testImplementation("org.mockito:mockito-core:5.24.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.3")
     mockitoAgent("org.mockito:mockito-core:5.24.0") { isTransitive = false }
