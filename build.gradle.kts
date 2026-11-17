@@ -7,8 +7,8 @@ import org.gradle.external.javadoc.StandardJavadocDocletOptions
 
 plugins {
     checkstyle
-    id("com.github.spotbugs") version "6.5.13"
-    id("com.gradleup.shadow") version "9.6.1"
+    alias(libs.plugins.spotbugs)
+    alias(libs.plugins.shadow)
     `java-library`
     `maven-publish`
 }
@@ -30,6 +30,9 @@ version = (if (!hasProperty("ver")) {
 }).uppercase()
 
 java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+    }
     sourceCompatibility = JavaVersion.VERSION_25
     targetCompatibility = JavaVersion.VERSION_25
 }
@@ -65,30 +68,30 @@ configurations[integrationTestSourceSet.runtimeOnlyConfigurationName]
     .extendsFrom(configurations.testRuntimeOnly.get())
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:26.3.build.249-stable")
-    compileOnly("dev.jorel:commandapi-paper-shade:12.1.0") {
+    compileOnly(libs.paper.api)
+    compileOnly(libs.commandapi.paper.shade) {
         // Upstream metadata references unpublished modules already bundled in this JAR.
         // https://github.com/CommandAPI/CommandAPI/issues/704
         isTransitive = false
     }
-    compileOnly("com.github.spotbugs:spotbugs-annotations:4.10.5")
-    compileOnly("org.mongodb:mongodb-driver-sync:5.14.0")
-    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.23.0")
-    api("org.hibernate.validator:hibernate-validator:9.1.6.Final")
-    implementation("org.xerial:sqlite-jdbc:3.54.1.0")
-    "spotbugsPlugins"("com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0")
-    testCompileOnly("com.github.spotbugs:spotbugs-annotations:4.10.5")
-    testImplementation("io.papermc.paper:paper-api:26.3.build.249-stable")
-    testImplementation("dev.jorel:commandapi-paper-shade:12.1.0") {
+    compileOnly(libs.spotbugs.annotations)
+    compileOnly(libs.mongodb.driver.sync)
+    api(libs.jackson.dataformat.yaml)
+    api(libs.hibernate.validator)
+    implementation(libs.sqlite.jdbc)
+    "spotbugsPlugins"(libs.findsecbugs.plugin)
+    testCompileOnly(libs.spotbugs.annotations)
+    testImplementation(libs.paper.api)
+    testImplementation(libs.commandapi.paper.shade) {
         // Upstream metadata references unpublished modules already bundled in this JAR.
         // https://github.com/CommandAPI/CommandAPI/issues/704
         isTransitive = false
     }
-    testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
-    testImplementation("org.mongodb:mongodb-driver-sync:5.14.0")
-    testImplementation("org.mockito:mockito-core:5.24.0")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.3")
-    mockitoAgent("org.mockito:mockito-core:5.24.0") { isTransitive = false }
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.mongodb.driver.sync)
+    testImplementation(libs.mockito.core)
+    testRuntimeOnly(libs.junit.platform.launcher)
+    mockitoAgent(libs.mockito.core) { isTransitive = false }
     add(integrationTestSourceSet.implementationConfigurationName, sourceSets.main.get().output)
 }
 
@@ -123,6 +126,7 @@ tasks.register<Test>("integrationTest") {
 }
 
 tasks.javadoc {
+    val mongoDocsVersion = libs.versions.mongodb.get().substringBeforeLast(".")
     title = "CwCommons ${project.version} API"
     // Keep documentation errors visible without failing the release; -missing suppresses
     // missing-documentation lint messages.
@@ -138,10 +142,11 @@ tasks.javadoc {
         // Online -link targets need an accessible element-list or package-list. Fetch failures
         // are reported as errors and leave types unlinked. Paper/CommandAPI are omitted
         // because their hosted element-lists are unstable.
+        // Jackson 2.23.0 is not hosted on javadoc.io yet; retain the available 2.22.0 reference.
         links(
             "https://docs.oracle.com/en/java/javase/25/docs/api/",
             "https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-databind/2.22.0/",
-            "https://mongodb.github.io/mongo-java-driver/5.13/apidocs/driver-sync/",
+            "https://mongodb.github.io/mongo-java-driver/$mongoDocsVersion/apidocs/driver-sync/",
             "https://javadoc.io/doc/jakarta.validation/jakarta.validation-api/3.1.1/"
         )
     }
@@ -156,7 +161,7 @@ val javadocJar = tasks.register<Jar>("javadocJar") {
 }
 
 checkstyle {
-    toolVersion = "13.9.0"
+    toolVersion = libs.versions.checkstyle.get()
     maxWarnings = 0
 }
 

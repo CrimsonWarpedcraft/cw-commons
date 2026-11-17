@@ -15,9 +15,9 @@ runs:
       with:
         java-version: ${{ inputs.java-version }}
         distribution: 'microsoft'
-        cache: gradle
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v6
       with:
+        # setup-gradle is the sole cache owner; keep the non-commercial basic provider.
         cache-provider: basic
