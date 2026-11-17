@@ -87,6 +87,9 @@ included — shade it in your own plugin as you normally would, and it will be c
 
 ### Config loading
 
+> **Unreleased / next release:** the lifecycle example below uses `AutoCloseable`, which is not
+> available on `ConfigManager` in the current stable `v0.3.4`.
+
 ```java
 // Define your config POJO
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -99,11 +102,20 @@ public class MyConfig implements Config {
 }
 
 // Load and validate in onEnable()
-MyConfig config = new BukkitConfigManagerBuilder().build().load(configFile, MyConfig.class);
+MyConfig config;
+try (ConfigManager manager = new BukkitConfigManagerBuilder().build()) {
+    config = manager.load(configFile, MyConfig.class);
+}
 ```
 
 `ConfigManager` throws `IOException` if the file cannot be read and `IllegalStateException` if any
 declared constraint is violated.
+
+In the next release, close the manager after its last load/validation to release its default
+validator factory; the loaded config remains usable. For reloads, retain the manager until
+`onDisable()` instead. A validator supplied with `.validator(...)` remains caller-owned: keep its
+factory open until all users are done, then close that factory yourself. See the
+[lifecycle guide](docs/examples/config-loading.md#manager-lifetime-next-release).
 
 ### Validating Bukkit locations
 
