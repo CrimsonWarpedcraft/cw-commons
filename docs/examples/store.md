@@ -8,8 +8,9 @@ nav_order: 3
 
 `DataStore` is an **asynchronous, write-behind key-value store**. You read and write Java objects
 keyed by anything you can turn into a string; behind the scenes the store serializes them to JSON,
-caches them in memory, and flushes them to a backend (SQLite or MongoDB) on a dedicated I/O thread.
-Nothing touches disk on the main thread.
+caches them in memory, and flushes them to a backend (SQLite or MongoDB) in one serial I/O lane.
+By default that lane uses a dedicated daemon thread, keeping I/O off the main thread. A custom
+direct executor such as `Runnable::run` instead runs I/O on its caller.
 
 This page covers the concepts and the bundled SQLite backend. Once you understand it, wiring up the
 [Bukkit helpers](store-bukkit.md) or swapping in [MongoDB](store-mongo.md) is a small step.
@@ -26,12 +27,12 @@ common case — see [custom setups](#advanced-custom-backends-and-serialization)
      ▼
  DataStore  (ConcurrentDataStore)
      │     • one Repository per namespace; caches and reuses them
-     │     • flush() / close() fan out to every repository
+     │     • flush() / close() flush every registered namespace
      │  get / put / delete / flush  →  CompletableFuture<…>
      ▼
  Repository<K, V>  (one per namespace)
      │     • serializes K via KeySerializer, V via Jackson
-     │     • dispatches every operation onto the single I/O thread
+     │     • dispatches every operation onto one logical I/O lane
      │  String key, String json
      ▼
  CachingBackend  (in-memory cache + write buffer — skipped when CacheMode.NONE)
@@ -45,7 +46,7 @@ common case — see [custom setups](#advanced-custom-backends-and-serialization)
 
 | Layer | Type | Role |
 |-------|------|------|
-| Store | `DataStore` → `ConcurrentDataStore` | Owns the namespaces and the I/O thread; the only thing you keep a reference to. |
+| Store | `DataStore` → `ConcurrentDataStore` | Owns the namespaces and default I/O thread; manages the shared serial lane. |
 | Repository | `Repository<K, V>` | A typed view over one namespace. Serializes keys/values and hands work to the I/O thread. |
 | Cache | `CachingBackend` | Keeps loaded/written values in memory and buffers writes — see [Caching & write policies](#caching-and-write-policies). |
 | Backend | `StorageBackend` → `SqliteBackend` / `MongoDbBackend` | The actual persistence: a SQLite file or a MongoDB database. |
@@ -102,9 +103,10 @@ The value type can be any Jackson-serializable class: a `record`, a POJO, a boxe
 
 ## Reading and writing
 
-Every operation returns a `CompletableFuture`. **The future completes on the store's I/O thread —
-not the Bukkit main thread** — so any continuation that calls the Bukkit API must hop back onto the
-main thread with the scheduler.
+Every operation returns a `CompletableFuture`. **Callback thread affinity is not guaranteed.**
+Non-async continuations can run on the thread completing the future or on the caller attaching
+them, and direct executors run I/O on their caller. Any continuation that calls the Bukkit API
+must explicitly hop back onto the main thread with the scheduler.
 
 ```java
 UUID playerId = player.getUniqueId();
@@ -182,10 +184,31 @@ store.flush();
 store.close();
 ```
 
-- `store.flush()` fans out to every repository and returns a future that completes when all dirty
-  entries have been persisted.
-- `store.close()` flushes first, then shuts down the I/O thread and (when the store owns its
-  backend) closes the SQLite connection. **Always call it in `onDisable()`.**
+- `store.flush()` flushes every registered namespace in the shared lane and returns a future that
+  completes when all dirty entries have been persisted.
+- `store.close()` atomically stops admission: new namespace lookups (including existing namespaces)
+  throw `RejectedExecutionException`; operations on existing repository handles and `store.flush()`
+  return exceptionally completed futures. Already admitted operations drain in order, then every
+  registered namespace is flushed, the owned backend is closed, and the owned default executor is
+  shut down and awaited. Caller-supplied executors are **never** shut down; `.closeBackend(false)`
+  retains the backend but still drains and flushes. **Always close in `onDisable()`.**
+- Close is idempotent and concurrency-safe. Earlier operation failures remain the primary close
+  failure; later flush/cleanup failures are suppressed. Cleanup still attempts all namespaces,
+  backend release, and owned executor shutdown after a failure.
+- `.closeTimeout(Duration.ofSeconds(30))` configures the default 30-second wait per close call,
+  including owned worker termination (`Duration.ZERO` checks without waiting). Timeout or
+  interruption throws `IOException` reporting incomplete persistence/resource release; interruption
+  preserves interrupt status. No queued writes are cancelled, no `shutdownNow()` is used, and the
+  backend is not closed under active work. Unfinished terminal cleanup remains queued, and a later
+  close can wait again. **Stuck backend I/O cannot be forcibly guaranteed to finish.**
+- Call blocking close from the lifecycle owner, not from a store operation or an inline callback
+  executing inside it: this fails clearly rather than deadlocking. The timeout bounds waiting,
+  not synchronous execution by a direct executor. Executor dispatch rejection fails affected
+  request futures and is reported by close; terminal cleanup is safe to attempt on the rejecting
+  caller once no I/O is active, and that synchronous cleanup cannot be preempted by the wait limit.
+- One lane is shared across namespaces, even with a multi-worker executor. Cancelling a returned
+  future does not cancel its admitted I/O; dispatch rejection is an explicit exceptional completion,
+  not silent loss of a queued write.
 
 Three flush triggers cover most plugins; combine them:
 
