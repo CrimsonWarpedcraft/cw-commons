@@ -60,15 +60,23 @@ A top-level `==` is optional, so a hand-written item needs only `type` (plus opt
 Declare `Location` and `ItemStack` fields like any other and load with
 `new BukkitConfigManagerBuilder().build()`:
 
+> **Unreleased / next release:** this lifecycle example uses `ConfigManager` as `AutoCloseable`.
+> Current stable `v0.3.4` does not support this API. See
+> [manager lifetime](config-loading.md#manager-lifetime-next-release).
+
 ```java
 import com.crimsonwarpedcraft.cwcommons.config.Config;
+import com.crimsonwarpedcraft.cwcommons.config.ConfigManager;
 import com.crimsonwarpedcraft.cwcommons.config.bukkit.BukkitConfigManagerBuilder;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
 
 public record GuiConfig(Location anchor, ItemStack icon) implements Config {}
 
-GuiConfig config = new BukkitConfigManagerBuilder().build().load(configFile, GuiConfig.class);
+GuiConfig config;
+try (ConfigManager manager = new BukkitConfigManagerBuilder().build()) {
+    config = manager.load(configFile, GuiConfig.class);
+}
 ```
 
 ```yaml

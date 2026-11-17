@@ -29,11 +29,11 @@ class BukkitConfigManagerIntegrationTest {
     Path file = dir.resolve("config.yml");
     Files.writeString(file, "spawn:\n  world: world\n  x: 0.5\n  y: 64.0\n  z: 0.5\n");
     World world = mock(World.class);
-    try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+    try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
+        ConfigManager manager = new BukkitConfigManagerBuilder().build()) {
       bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(world);
 
-      LocationConfig config =
-          new BukkitConfigManagerBuilder().build().load(file.toFile(), LocationConfig.class);
+      LocationConfig config = manager.load(file.toFile(), LocationConfig.class);
 
       assertNotNull(config.spawn());
       assertEquals(world, config.spawn().getWorld());
@@ -49,10 +49,10 @@ class BukkitConfigManagerIntegrationTest {
   void rejectsLocationMissingOrientation(@TempDir Path dir) throws IOException {
     Path file = dir.resolve("config.yml");
     Files.writeString(file, "spawn:\n  world: world\n  x: 0.5\n  y: 64.0\n  z: 0.5\n");
-    try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+    try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
+        ConfigManager manager = new BukkitConfigManagerBuilder().build()) {
       bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(mock(World.class));
 
-      ConfigManager manager = new BukkitConfigManagerBuilder().build();
       assertThrows(IllegalStateException.class,
           () -> manager.load(file.toFile(), OrientedConfig.class));
     }
@@ -64,11 +64,11 @@ class BukkitConfigManagerIntegrationTest {
     Files.writeString(file,
         "spawn:\n  world: world\n  x: 0.5\n  y: 64.0\n  z: 0.5\n"
             + "  yaw: 90.0\n  pitch: -30.0\n");
-    try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class)) {
+    try (MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
+        ConfigManager manager = new BukkitConfigManagerBuilder().build()) {
       bukkit.when(() -> Bukkit.getWorld("world")).thenReturn(mock(World.class));
 
-      OrientedConfig config =
-          new BukkitConfigManagerBuilder().build().load(file.toFile(), OrientedConfig.class);
+      OrientedConfig config = manager.load(file.toFile(), OrientedConfig.class);
 
       assertEquals(90.0f, config.spawn().getYaw(), 0.001f);
       assertEquals(-30.0f, config.spawn().getPitch(), 0.001f);

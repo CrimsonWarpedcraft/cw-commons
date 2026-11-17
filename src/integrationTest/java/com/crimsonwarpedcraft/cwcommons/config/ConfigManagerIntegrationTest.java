@@ -21,8 +21,10 @@ class ConfigManagerIntegrationTest {
   void loadsYamlAndValidatesBoundFields() throws IOException {
     Path configFile = writeConfig("message: hello\nretries: 3\n");
 
-    TestConfig config =
-        ConfigManager.builder().build().load(configFile.toFile(), TestConfig.class);
+    TestConfig config;
+    try (ConfigManager manager = ConfigManager.builder().build()) {
+      config = manager.load(configFile.toFile(), TestConfig.class);
+    }
 
     assertEquals("hello", config.message);
     assertEquals(3, config.retries);
@@ -32,19 +34,23 @@ class ConfigManagerIntegrationTest {
   void rejectsYamlThatViolatesConstraints() throws IOException {
     Path configFile = writeConfig("message: '  '\nretries: 0\n");
 
-    IllegalStateException exception = assertThrows(IllegalStateException.class,
-        () -> ConfigManager.builder().build().load(configFile.toFile(), TestConfig.class));
+    try (ConfigManager manager = ConfigManager.builder().build()) {
+      IllegalStateException exception = assertThrows(IllegalStateException.class,
+          () -> manager.load(configFile.toFile(), TestConfig.class));
 
-    assertTrue(exception.getMessage().contains("message"));
-    assertTrue(exception.getMessage().contains("retries"));
+      assertTrue(exception.getMessage().contains("message"));
+      assertTrue(exception.getMessage().contains("retries"));
+    }
   }
 
   @Test
   void rejectsMalformedYaml() throws IOException {
     Path configFile = writeConfig("message: [unterminated\n");
 
-    assertThrows(IOException.class,
-        () -> ConfigManager.builder().build().load(configFile.toFile(), TestConfig.class));
+    try (ConfigManager manager = ConfigManager.builder().build()) {
+      assertThrows(IOException.class,
+          () -> manager.load(configFile.toFile(), TestConfig.class));
+    }
   }
 
   private Path writeConfig(String yaml) throws IOException {

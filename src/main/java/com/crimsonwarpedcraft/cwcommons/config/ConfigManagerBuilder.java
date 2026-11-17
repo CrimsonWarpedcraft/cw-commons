@@ -18,7 +18,10 @@ import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator
  * {@code ConfigManager.builder().build()} is enough for a plain YAML config. Override the
  * {@link #mapper(ObjectMapper) mapper} or {@link #validator(Validator) validator} when you need to:
  * <pre>{@code
- * ConfigManager manager = ConfigManager.builder().build();
+ * // Unreleased / next release: ConfigManager is not AutoCloseable in v0.3.4.
+ * try (ConfigManager manager = ConfigManager.builder().build()) {
+ *   manager.validate(config);
+ * }
  * }</pre>
  *
  * <p>The default mapper reads YAML and binds {@code private} fields; the default validator is the
@@ -53,6 +56,9 @@ public class ConfigManagerBuilder {
   /**
    * Sets the Jakarta validator used to check constraints.
    *
+   * <p>The validator remains caller-owned. Keep its factory open while any manager or other caller
+   * uses it; closing a manager does not close that factory.
+   *
    * @param validator the validator
    * @return this builder
    */
@@ -64,12 +70,28 @@ public class ConfigManagerBuilder {
   /**
    * Assembles the configured {@link ConfigManager}.
    *
+   * <p>Each manager owns its default validator factory until {@link ConfigManager#close()}. Close
+   * the manager after its last load/validate call. If construction fails, any newly created factory
+   * is closed before the failure is propagated. A supplied validator is never owned or closed.
+   *
    * @return a ready-to-use config manager
    */
   public ConfigManager build() {
     ObjectMapper json = (mapper != null) ? mapper : defaultMapper();
-    Validator check = (validator != null) ? validator : defaultValidator();
-    return new ConfigManager(json, check);
+    if (validator != null) {
+      return new ConfigManager(json, validator);
+    }
+    ValidatorFactory factory = defaultValidatorFactory();
+    try {
+      return new ConfigManager(json, factory.getValidator(), factory);
+    } catch (RuntimeException | Error failure) {
+      try {
+        factory.close();
+      } catch (RuntimeException | Error closeFailure) {
+        failure.addSuppressed(closeFailure);
+      }
+      throw failure;
+    }
   }
 
   private static ObjectMapper defaultMapper() {
@@ -77,12 +99,10 @@ public class ConfigManagerBuilder {
         .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
   }
 
-  private static Validator defaultValidator() {
-    try (ValidatorFactory factory = Validation.byDefaultProvider()
+  private static ValidatorFactory defaultValidatorFactory() {
+    return Validation.byDefaultProvider()
         .configure()
         .messageInterpolator(new ParameterMessageInterpolator())
-        .buildValidatorFactory()) {
-      return factory.getValidator();
-    }
+        .buildValidatorFactory();
   }
 }
