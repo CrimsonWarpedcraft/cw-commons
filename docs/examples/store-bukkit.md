@@ -55,7 +55,7 @@ chain it as above. Call it exactly once, in `onEnable()` — until you do, no qu
 ### Reading and writing
 
 `get`/`save` mirror the [repository API](store.md#reading-and-writing) but take a `Player`. They are
-just as asynchronous: the futures complete on the store's I/O thread, so reschedule to the main
+just as asynchronous: callback thread affinity is not guaranteed, so reschedule to the main
 thread before touching the Bukkit API.
 
 ```java

@@ -166,7 +166,7 @@ kills.get(player.getUniqueId())                         // CompletableFuture<Opt
 store.close();
 ```
 
-Futures complete on the store's I/O thread, so hop back to the main thread before touching the
+Callback thread affinity is not guaranteed, so hop back to the main thread before touching the
 Bukkit API. For per-player data, `PlayerDataManager` and `AutoFlushTask` handle flushing for you —
 see the [Data Store guide](https://cw-commons.crimsonwarpedcraft.com/examples/store.html).
 

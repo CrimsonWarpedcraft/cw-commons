@@ -5,8 +5,10 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
@@ -38,6 +40,7 @@ public class DataStoreBuilder {
   private ObjectMapper mapper;
   private Executor executor;
   private boolean closeBackend = true;
+  private Duration closeTimeout = Duration.ofSeconds(30);
 
   /**
    * Creates a builder for a store backed by the given backend.
@@ -93,7 +96,11 @@ public class DataStoreBuilder {
   /**
    * Sets the executor that all store I/O is dispatched on.
    *
-   * <p>When unset, a single daemon thread named {@code <name>-store-io} is used.
+   * <p>When unset, the store owns a single daemon thread named {@code <name>-store-io} and shuts
+   * it down on close. A supplied executor remains caller-owned and is never shut down. All store
+   * I/O is serialized into one logical lane even with a multi-worker executor. Direct executors
+   * such as {@code Runnable::run} run I/O on the caller. Dispatch rejection completes affected
+   * requests exceptionally; close reports the rejection and safely attempts terminal cleanup.
    *
    * @param executor the executor to run I/O tasks on
    * @return this builder
@@ -116,23 +123,51 @@ public class DataStoreBuilder {
   }
 
   /**
+   * Sets how long each close call waits for draining, cleanup, and owned worker termination.
+   *
+   * <p>The default is 30 seconds. Zero checks completion without waiting. Timeout or interruption
+   * reports incomplete persistence without cancelling work or closing a backend under active I/O;
+   * cleanup stays queued. This bounds waiting, not synchronous execution by a direct executor or
+   * terminal cleanup on the caller after rejection. Stuck I/O cannot be forcibly completed.
+   *
+   * @param closeTimeout a non-negative duration representable in nanoseconds
+   * @return this builder
+   * @throws IllegalArgumentException if the duration is negative or too large
+   */
+  public DataStoreBuilder closeTimeout(Duration closeTimeout) {
+    Objects.requireNonNull(closeTimeout);
+    if (closeTimeout.isNegative()) {
+      throw new IllegalArgumentException("closeTimeout must not be negative");
+    }
+    try {
+      closeTimeout.toNanos();
+    } catch (ArithmeticException e) {
+      throw new IllegalArgumentException("closeTimeout is too large", e);
+    }
+    this.closeTimeout = closeTimeout;
+    return this;
+  }
+
+  /**
    * Assembles the configured {@link DataStore}.
    *
    * @return a ready-to-use store
    */
   public DataStore build() {
-    Executor exec = (executor != null) ? executor : defaultExecutor(name);
     ObjectMapper json = (mapper != null) ? mapper : defaultMapper();
     StorageBackend effective = switch (cacheMode) {
       case NONE -> backend;
       case CACHE_AND_FLUSH -> new CachingBackend(backend, WritePolicy.CACHE_AND_FLUSH);
       case WRITE_THROUGH_ATOMIC -> new CachingBackend(backend, WritePolicy.WRITE_THROUGH_ATOMIC);
     };
+    ExecutorService ownedExecutor = executor == null ? defaultExecutor(name) : null;
+    Executor exec = executor != null ? executor : ownedExecutor;
     return new ConcurrentDataStore(
-        new ThreadedRepositoryBuilder(effective, exec, json, closeBackend));
+        new ThreadedRepositoryBuilder(
+            effective, exec, json, closeBackend, ownedExecutor, closeTimeout));
   }
 
-  private static Executor defaultExecutor(String name) {
+  private static ExecutorService defaultExecutor(String name) {
     return Executors.newSingleThreadExecutor(r -> {
       Thread thread = new Thread(r, name + "-store-io");
       thread.setDaemon(true);
