@@ -30,7 +30,14 @@ dependencies {
 
 Pass a `MongoDbBackend` to [`DataStore.builder`](store.md#advanced-custom-backends-and-serialization)
 just like any other backend — the same entry point SQLite uses. The `MongoDbBackend` constructor
-throws `IOException` if it can't connect.
+creates a client and database handle, wrapping initialization failures (such as an invalid URI or
+database name) in `IOException`. Null arguments fail immediately with `NullPointerException`.
+
+The MongoDB driver connects **lazily**. Construction does not ping the server or verify
+authentication, so a successful constructor does **not** prove the server is reachable or the
+credentials work. Those failures may surface on later backend operations. If initialization fails
+after acquiring a client, the backend closes it; a cleanup failure is suppressed on the original
+cause rather than replacing it.
 
 ```java
 import com.crimsonwarpedcraft.cwcommons.store.DataStore;
@@ -53,6 +60,10 @@ try {
 
 > The builder's default mapper sets field visibility, so plain POJOs and `record`s both serialize
 > correctly. Override it with `.mapper(...)` only to add serializers or change Jackson settings.
+
+The library's initialization error message does not include the URI. Original driver causes and
+suppressed cleanup exceptions are retained for diagnosis, however, and their messages may contain
+sensitive details. Inspect them before logging or sharing a full exception or stack trace.
 
 ## Shutting down
 

@@ -34,20 +34,38 @@ public final class MongoDbBackend implements StorageBackend {
   private final MongoDatabase database;
 
   /**
-   * Creates a {@link MongoDbBackend} connected to the given MongoDB database.
+   * Creates a {@link MongoDbBackend} for the given MongoDB database.
+   *
+   * <p>The driver connects lazily; construction does not verify connectivity or authentication.
+   * Those failures may surface on later operations. If initialization fails after creating a
+   * client, that client is closed. On success, this backend owns the client until {@link #close()}.
+   *
+   * <p>Initialization error messages omit the URI, but retained driver causes and suppressed
+   * exceptions may contain sensitive details. Inspect them before logging.
    *
    * @param uri the MongoDB connection URI (e.g. {@code "mongodb://localhost:27017"})
    * @param databaseName the name of the database to use
-   * @throws IOException if the connection cannot be established
+   * @throws IOException if the client or database handle cannot be initialized
+   * @throws NullPointerException if either argument is {@code null}
    */
   public MongoDbBackend(String uri, String databaseName) throws IOException {
     Objects.requireNonNull(uri);
     Objects.requireNonNull(databaseName);
     try {
-      client = MongoClients.create(uri);
-      database = client.getDatabase(databaseName);
+      MongoClient candidate = MongoClients.create(uri);
+      try {
+        database = candidate.getDatabase(databaseName);
+      } catch (RuntimeException | Error e) {
+        try {
+          candidate.close();
+        } catch (RuntimeException | Error cleanupFailure) {
+          e.addSuppressed(cleanupFailure);
+        }
+        throw e;
+      }
+      client = candidate;
     } catch (Exception e) {
-      throw new IOException("Failed to connect to MongoDB at " + uri, e);
+      throw new IOException("Failed to initialize MongoDB backend", e);
     }
   }
 

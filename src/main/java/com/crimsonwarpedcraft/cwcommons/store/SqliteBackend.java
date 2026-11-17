@@ -18,7 +18,7 @@ import java.util.Optional;
  *
  * <p>Usage:
  * <pre>{@code
- * DataStore store = CachedDataStore.builder("MyPlugin", new SqliteBackend(dbFile)).build();
+ * DataStore store = DataStore.builder(new SqliteBackend(dbFile)).name("MyPlugin").build();
  * }</pre>
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
@@ -31,6 +31,9 @@ public final class SqliteBackend implements StorageBackend {
    * Creates a {@link SqliteBackend} backed by the given database file.
    *
    * <p>Parent directories are created if they do not already exist.
+   * The connection is opened and the schema initialized during construction. If initialization
+   * fails, any acquired connection is closed. On success, this backend owns the connection until
+   * {@link #close()}.
    *
    * @param dbFile the SQLite database file to open or create
    * @throws IOException if the database cannot be opened or parent directories cannot be created
@@ -45,24 +48,34 @@ public final class SqliteBackend implements StorageBackend {
   }
 
   SqliteBackend(String url) throws IOException {
+    Objects.requireNonNull(url);
     this.conn = openConnection(url, url);
   }
 
   private static Connection openConnection(String url, String label) throws IOException {
     try {
       Connection c = DriverManager.getConnection(url);
-      try (Statement stmt = c.createStatement()) {
-        stmt.execute(
-            """
-            CREATE TABLE IF NOT EXISTS data (
-                namespace TEXT NOT NULL,
-                key       TEXT NOT NULL,
-                value     TEXT NOT NULL,
-                PRIMARY KEY (namespace, key)
-            )
-            """);
+      try {
+        try (Statement stmt = c.createStatement()) {
+          stmt.execute(
+              """
+              CREATE TABLE IF NOT EXISTS data (
+                  namespace TEXT NOT NULL,
+                  key       TEXT NOT NULL,
+                  value     TEXT NOT NULL,
+                  PRIMARY KEY (namespace, key)
+              )
+              """);
+        }
+        return c;
+      } catch (SQLException | RuntimeException | Error e) {
+        try {
+          c.close();
+        } catch (SQLException | RuntimeException | Error cleanupFailure) {
+          e.addSuppressed(cleanupFailure);
+        }
+        throw e;
       }
-      return c;
     } catch (SQLException e) {
       throw new IOException("Failed to initialize SQLite database at " + label, e);
     }
