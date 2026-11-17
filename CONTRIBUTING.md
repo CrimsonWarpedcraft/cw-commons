@@ -44,6 +44,11 @@ Common scopes mirror the package layout: `config`, `command`, `store`, `bukkit`,
 
 ## Building & checks
 
+Use an installed **JDK 25** and the checked-in **Gradle 9.9.1** wrapper. The build selects a Java 25
+toolchain for compilation, tests, and Javadoc and targets Java 25 bytecode. Dependency/plugin pins
+are centralized in `gradle/libs.versions.toml`; update shared versions there so test, integration,
+and Mockito agent dependencies stay aligned.
+
 ```bash
 ./gradlew build        # macOS / Linux / Unix
 gradlew.bat build      # Windows
@@ -53,9 +58,14 @@ gradlew.bat build      # Windows
 **SpotBugs + FindSecBugs**, and the **JUnit unit test** suite. The build is configured with
 `maxWarnings = 0`, so **every warning must be fixed** before a PR can merge.
 
+For Windows agent terminals, these are task-selection examples: use the
+[bounded, log-redirected child-process procedure in `CLAUDE.md`](CLAUDE.md#windows-agent-terminal)
+for every Gradle invocation, with `JAVA_HOME` pointing to JDK 25.
+
 ```bash
 ./gradlew test                                                   # tests only
 ./gradlew test --tests "com.crimsonwarpedcraft.cwcommons.store.ConcurrentDataStoreTest"  # one class
+./gradlew generatePomFileForShadowPublication javadoc             # local publication/docs checks
 ./gradlew release -Pver=v1.0.0                                   # build the release + javadoc jars
 ```
 
@@ -98,8 +108,9 @@ test process and supplies these variables automatically.
 ## Building the documentation
 
 The site at [cw-commons.crimsonwarpedcraft.com](https://cw-commons.crimsonwarpedcraft.com) is a
-[Just the Docs](https://just-the-docs.com) Jekyll site under `docs/`, published on each release by
-`.github/workflows/docs.yml`. The API reference (Javadoc) is hosted per-version by
+[Just the Docs](https://just-the-docs.com) Jekyll site under `docs/`. `.github/workflows/docs.yml`
+deploys it on pushes to `main` that change `docs/**` or the docs workflow, and on manual dispatch,
+not on releases. The API reference (Javadoc) is hosted per-version by
 [JitPack](https://jitpack.io/#CrimsonWarpedcraft/cw-commons), which the site links out to.
 
 ```bash
@@ -109,6 +120,7 @@ bundle install
 bundle exec jekyll serve   # http://localhost:4000
 
 # Preview the API docs locally — open build/docs/javadoc/index.html
+cd ..                     # back to the repository root
 ./gradlew javadoc
 ```
 

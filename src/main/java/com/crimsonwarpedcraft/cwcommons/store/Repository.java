@@ -11,9 +11,14 @@ import java.util.concurrent.CompletableFuture;
  * {@link CompletableFuture}s; failures are delivered as exceptional completions wrapping the
  * underlying {@link java.io.IOException}.
  *
- * <p><strong>Threading note:</strong> futures returned by this interface complete on the store's
- * I/O executor thread, <em>not</em> the Bukkit main thread. Any continuation that touches the
- * Bukkit API must be rescheduled explicitly:
+ * <p>Once the store starts closing, all operations on existing handles return exceptionally
+ * completed futures with {@link java.util.concurrent.RejectedExecutionException}. Previously
+ * admitted operations are drained; cancelling a returned future does not cancel its I/O.
+ *
+ * <p><strong>Threading note:</strong> store I/O uses one logical lane, but callback thread affinity
+ * is not guaranteed. Non-async {@link CompletableFuture} continuations may run on the completing
+ * thread or the caller attaching them, and a direct executor runs I/O on its caller. Any
+ * continuation that touches the Bukkit API must be rescheduled explicitly:
  * <pre>{@code
  * repository.get(uuid).thenAccept(data ->
  *     plugin.getServer().getScheduler().runTask(plugin, () ->

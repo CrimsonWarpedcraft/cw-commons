@@ -1,6 +1,7 @@
 package com.crimsonwarpedcraft.cwcommons.config.bukkit;
 
 import com.crimsonwarpedcraft.cwcommons.bukkit.serialization.BukkitModule;
+import com.crimsonwarpedcraft.cwcommons.config.ConfigManager;
 import com.crimsonwarpedcraft.cwcommons.config.ConfigManagerBuilder;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -13,11 +14,15 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
  *
  * <p>It registers {@link BukkitModule} on the YAML mapper, so config classes can bind
  * {@link org.bukkit.Location} and {@link org.bukkit.inventory.ItemStack} fields. The core
- * {@link com.crimsonwarpedcraft.cwcommons.config.ConfigManager} stays Bukkit-free; this convenience
+ * {@link ConfigManager} stays Bukkit-free; this convenience
  * wires the coupling in for you, the same way {@code BukkitDataStoreBuilder} does for the data
  * store:
  * <pre>{@code
- * MyConfig config = new BukkitConfigManagerBuilder().build().load(configFile, MyConfig.class);
+ * // Unreleased / next release: ConfigManager is not AutoCloseable in v0.3.4.
+ * MyConfig config;
+ * try (ConfigManager manager = new BukkitConfigManagerBuilder().build()) {
+ *   config = manager.load(configFile, MyConfig.class);
+ * }
  * }</pre>
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.

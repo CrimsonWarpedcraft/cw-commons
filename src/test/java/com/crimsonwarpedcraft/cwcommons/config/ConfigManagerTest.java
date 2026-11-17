@@ -52,22 +52,27 @@ class ConfigManagerTest {
 
   @Test
   void builderBuildsValidatingManager() {
-    ConfigManager manager = ConfigManager.builder().build();
-    assertDoesNotThrow(() -> manager.validate(new TestConfig()));
-    assertThrows(IllegalStateException.class, () -> manager.validate(new TestConfig("")));
+    try (ConfigManager manager = ConfigManager.builder().build()) {
+      assertDoesNotThrow(() -> manager.validate(new TestConfig()));
+      assertThrows(IllegalStateException.class, () -> manager.validate(new TestConfig("")));
+    }
   }
 
   @Test
   void validateAcceptsValidConfig() {
-    ConfigManager manager = new ConfigManager(new ObjectMapper(), realValidator());
-    assertDoesNotThrow(() -> manager.validate(new TestConfig()));
+    try (ValidatorFactory factory = realValidatorFactory();
+        ConfigManager manager = new ConfigManager(new ObjectMapper(), factory.getValidator())) {
+      assertDoesNotThrow(() -> manager.validate(new TestConfig()));
+    }
   }
 
   @Test
   void validateThrowsOnViolations() {
-    ConfigManager manager = new ConfigManager(new ObjectMapper(), realValidator());
-    assertThrows(IllegalStateException.class,
-        () -> manager.validate(new TestConfig("")));
+    try (ValidatorFactory factory = realValidatorFactory();
+        ConfigManager manager = new ConfigManager(new ObjectMapper(), factory.getValidator())) {
+      assertThrows(IllegalStateException.class,
+          () -> manager.validate(new TestConfig("")));
+    }
   }
 
   @Test
@@ -93,12 +98,10 @@ class ConfigManagerTest {
         () -> manager.load(new File("anything.yml"), TestConfig.class));
   }
 
-  private static Validator realValidator() {
-    try (ValidatorFactory factory = Validation.byDefaultProvider()
+  private static ValidatorFactory realValidatorFactory() {
+    return Validation.byDefaultProvider()
         .configure()
         .messageInterpolator(new ParameterMessageInterpolator())
-        .buildValidatorFactory()) {
-      return factory.getValidator();
-    }
+        .buildValidatorFactory();
   }
 }

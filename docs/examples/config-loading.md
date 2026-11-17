@@ -11,6 +11,10 @@ Java object with Jackson, and validates that object against its JSR-380 constrai
 If anything is wrong you find out immediately, in `onEnable()`, instead of hitting a bad value
 deep in your plugin later.
 
+> **Unreleased / next release:** the manager lifecycle examples on this page require the upcoming
+> `AutoCloseable` API. Current stable `v0.3.4` has no `ConfigManager.close()` and cannot use these
+> try-with-resources examples. No dependency tag change is implied.
+
 - `load(...)` throws **`IOException`** if the file is missing, unreadable, or not valid YAML.
 - `load(...)` and `validate(...)` throw **`IllegalStateException`** if any constraint is violated.
   The message lists every offending property, e.g.
@@ -61,6 +65,7 @@ A few things worth knowing about how `ConfigManager` reads this class:
 ## Load in `onEnable()`
 
 ```java
+import com.crimsonwarpedcraft.cwcommons.config.ConfigManager;
 import com.crimsonwarpedcraft.cwcommons.config.bukkit.BukkitConfigManagerBuilder;
 import java.io.File;
 
@@ -68,7 +73,10 @@ import java.io.File;
 saveDefaultConfig();
 File configFile = new File(getDataFolder(), "config.yml");
 
-PluginConfig config = new BukkitConfigManagerBuilder().build().load(configFile, PluginConfig.class);
+PluginConfig config;
+try (ConfigManager manager = new BukkitConfigManagerBuilder().build()) {
+    config = manager.load(configFile, PluginConfig.class);
+}
 getLogger().info("Server name: " + config.getServerName());
 ```
 
@@ -84,14 +92,35 @@ A robust `onEnable()` turns a bad config into a clean shutdown rather than a sta
 
 ```java
 PluginConfig config;
-try {
-    config = new BukkitConfigManagerBuilder().build().load(configFile, PluginConfig.class);
+try (ConfigManager manager = new BukkitConfigManagerBuilder().build()) {
+    config = manager.load(configFile, PluginConfig.class);
 } catch (IOException | IllegalStateException e) {
     getLogger().severe("Failed to load config: " + e.getMessage());
     getServer().getPluginManager().disablePlugin(this);
     return;
 }
 ```
+
+## Manager lifetime (next release)
+
+Each default manager owns a Jakarta `ValidatorFactory` and keeps it open for its entire usable
+lifetime. Use try-with-resources for one-shot loading as above; closing the manager does not
+invalidate the loaded config object. If you reuse a manager for reloads, keep it in a plugin field
+and call `close()` in `onDisable()` after the last reload/validation has finished. Do not close it
+after startup if later code still needs it.
+
+`close()` is idempotent (even if its first factory-close attempt throws). After closing,
+`load(...)` and `validate(...)` throw `IllegalStateException("ConfigManager is closed")` before
+reading a file or invoking the validator. Calls on one manager are serialized, so closing waits
+for an in-flight load/validation. Do not call `close()` from mapper/validation callbacks or mutate
+shared collaborators during use. Bukkit-specific loading and validation still need the appropriate
+Bukkit thread; serialization does not make Bukkit APIs safe off-thread.
+
+With `ConfigManager.builder().validator(yourValidator)`, the validator remains **caller-owned**.
+The manager never closes its factory, including on failed construction. Keep that factory open
+until every manager and direct validator user has finished, then close it yourself. Managers also
+never close an externally supplied mapper. A failed default build closes any factory it created;
+each successful default build transfers ownership to the returned manager.
 
 ## `config.yml`
 
@@ -107,7 +136,9 @@ assemble in code, or for unit tests.
 
 ```java
 PluginConfig cfg = new PluginConfig();
-new BukkitConfigManagerBuilder().build().validate(cfg); // throws IllegalStateException if invalid
+try (ConfigManager manager = new BukkitConfigManagerBuilder().build()) {
+    manager.validate(cfg); // throws IllegalStateException if invalid
+}
 ```
 
 ## Loading Bukkit types
@@ -139,8 +170,10 @@ runs the constraint during `load()`, so loading throws `IllegalStateException` i
 world isn't loaded:
 
 ```java
-SpawnConfig config = new BukkitConfigManagerBuilder().build().load(configFile, SpawnConfig.class);
-// throws IllegalStateException if spawn's world isn't loaded
+try (ConfigManager manager = new BukkitConfigManagerBuilder().build()) {
+    SpawnConfig config = manager.load(configFile, SpawnConfig.class);
+    // throws IllegalStateException if spawn's world isn't loaded
+}
 ```
 
 ## Requiring orientation
@@ -164,8 +197,10 @@ public class SpawnConfig implements Config {
 marks an omitted `yaw`/`pitch` so the constraint can detect it during `load()`:
 
 ```java
-SpawnConfig config = new BukkitConfigManagerBuilder().build().load(configFile, SpawnConfig.class);
-// throws IllegalStateException if spawn omits yaw or pitch
+try (ConfigManager manager = new BukkitConfigManagerBuilder().build()) {
+    SpawnConfig config = manager.load(configFile, SpawnConfig.class);
+    // throws IllegalStateException if spawn omits yaw or pitch
+}
 ```
 
 A `null` location passes, so pair it with `@NotNull` to also require presence.

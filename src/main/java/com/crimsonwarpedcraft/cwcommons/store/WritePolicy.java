@@ -18,11 +18,12 @@ public enum WritePolicy {
   CACHE_AND_FLUSH,
 
   /**
-   * Persists each write immediately and atomically through to the backend.
+   * Passes each write to the backend before publishing it in the local cache.
    *
-   * <p>Use this when data must survive a process crash without waiting for a flush cycle. The
-   * cache still serves local reads, so it does not make a shared database coherent across
-   * servers — for that, disable caching with {@link CacheMode#NONE}.
+   * <p>With a delegate that persists each save, this avoids waiting for a flush cycle. Durability
+   * and atomicity depend on the delegate; a buffering delegate still requires a flush. The cache
+   * still serves local reads, so it does not make a shared database coherent across servers — for
+   * that, disable caching with {@link CacheMode#NONE}.
    */
   WRITE_THROUGH_ATOMIC
 }

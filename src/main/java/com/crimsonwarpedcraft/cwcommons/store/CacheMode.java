@@ -15,7 +15,7 @@ public enum CacheMode {
    * straight through.
    *
    * <p>Use this when several servers share one database, so each node always sees the others'
-   * latest writes. {@code flush()} is a no-op because nothing is buffered.
+   * latest writes. Nothing is buffered by the cache; flushes are delegated to the backend.
    */
   NONE,
 
@@ -28,9 +28,10 @@ public enum CacheMode {
   CACHE_AND_FLUSH,
 
   /**
-   * Caches reads but persists each write immediately and atomically through to the backend.
+   * Caches reads and passes each write to the backend before updating the local cache.
    *
-   * <p>Use this when data must survive a crash without waiting for a flush cycle. Note the cache
+   * <p>With a delegate that persists each save, this avoids waiting for a flush cycle. Durability
+   * and atomicity depend on the delegate; a buffering delegate still requires a flush. The cache
    * still serves local reads, so on a shared database use {@link #NONE} instead. Maps to
    * {@link WritePolicy#WRITE_THROUGH_ATOMIC}.
    */

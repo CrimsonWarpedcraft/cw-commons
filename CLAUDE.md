@@ -5,6 +5,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build commands
 
+Install JDK 25 and use the checked-in Gradle 9.9.1 wrapper. Compilation, tests, and Javadoc use the
+explicit Java 25 toolchain; bytecode still targets Java 25. Dependency and plugin versions live in
+`gradle/libs.versions.toml`, including shared Paper, JUnit, and Mockito agent/test versions.
+
+The commands below are task-selection examples. In a Windows agent terminal, run **every** Gradle
+invocation through the [bounded child-process procedure](#windows-agent-terminal) below instead of
+calling `gradlew.bat` directly in the foreground.
+
 ```powershell
 # Full build: compiles, runs Checkstyle + SpotBugs, runs unit tests
 ./gradlew build          # macOS/Linux
@@ -36,8 +44,9 @@ an explicit task and are not part of `build` or `check`.
 
 The published docs site lives in `docs/` — a [Just the Docs](https://just-the-docs.com) Jekyll
 site (landing page + the `docs/examples/` guides). `.github/workflows/docs.yml` builds and deploys
-it to GitHub Pages (custom domain `cw-commons.crimsonwarpedcraft.com`) on each published release via
-`actions/deploy-pages`; it skips prereleases.
+it to GitHub Pages (custom domain `cw-commons.crimsonwarpedcraft.com`) via `actions/deploy-pages`
+when a push to `main` changes `docs/**` or the docs workflow, and on manual dispatch. This prose site
+is release-independent; release tags do not trigger its deployment.
 
 The API reference (Javadoc) is hosted per-version by JitPack at
 `https://jitpack.io/com/github/CrimsonWarpedcraft/cw-commons/<version>/javadoc/` (the site links out
@@ -53,12 +62,13 @@ bundle install                      # first run only
 bundle exec jekyll serve            # http://localhost:4000
 
 # Preview the API docs: open build/docs/javadoc/index.html
+cd ..                              # back to the repository root
 ./gradlew javadoc
 ```
 
 ## Architecture
 
-Java 25, Gradle 9.6.1 (Kotlin DSL, `java-library` plugin), distributed via JitPack as
+Java 25, Gradle 9.9.1 (Kotlin DSL, `java-library` plugin), distributed via JitPack as
 `com.github.CrimsonWarpedcraft:cw-commons:VERSION`.
 
 The packages below, each with its own responsibility:
@@ -147,10 +157,40 @@ own plugin. Test code uses the original package paths.
 
 ## Checkstyle notes
 
-- Google Java Style enforced. `@Test` methods are exempt from the `MethodName` check.
+- Checkstyle 14.4.0 uses the matching upstream Google rules, with project exceptions retained.
+  JUnit test methods are exempt from the `GoogleMethodName` check.
 - Package-private classes do not require Javadoc.
 - `VariableDeclarationUsageDistance` max is 3 — declare variables close to first use.
 - Line limit is 100 characters. Wrap method chains with the `.` at the start of the continuation line.
+
+## Windows agent terminal
+
+Direct Gradle calls through an agent terminal can hang even after completion. For every invocation,
+set `JAVA_HOME` to an installed JDK 25, close stdin, redirect both streams to a unique log, and use a
+bounded child process. Do not install a system JDK or stop other builds as a workaround. For example,
+with the shell tool timeout set above 600 seconds:
+
+```powershell
+$workDir = (Get-Location).Path
+$logDir = Join-Path $env:LOCALAPPDATA "Temp\opencode"
+if (-not (Test-Path -LiteralPath $logDir)) { throw "Missing log directory: $logDir" }
+$log = Join-Path $logDir ("gradle-" + [guid]::NewGuid().ToString("N") + ".log")
+$arguments = '/d /s /c ""{0}\gradlew.bat" build generatePomFileForShadowPublication javadoc --no-daemon --console=plain --max-workers=2 <NUL >"{1}" 2>&1"' -f $workDir, $log
+$process = Start-Process -FilePath $env:ComSpec -ArgumentList $arguments -WorkingDirectory $workDir -WindowStyle Hidden -PassThru
+if (-not $process.WaitForExit(600000)) {
+    taskkill.exe /PID $process.Id /T /F
+    throw "Gradle exceeded 600 seconds; inspect $log before retrying."
+}
+$process.Refresh()
+[pscustomobject]@{ ExitCode = $process.ExitCode; Log = $log }
+if ($process.ExitCode -ne 0) { throw "Gradle failed; inspect $log" }
+```
+
+Read the log and check the exit code before reporting success. Change only the requested task list
+for other commands; never use an unbounded wait, global `--stop`, or kill unrelated processes.
+`generatePomFileForShadowPublication` generates a local POM without publishing. Confirm that its
+`build/publications/shadow/pom-default.xml` retains explicit versions and compile scopes for the
+unbundled `api` dependencies when changing dependency declarations.
 
 ## Windows / OneDrive quirk
 

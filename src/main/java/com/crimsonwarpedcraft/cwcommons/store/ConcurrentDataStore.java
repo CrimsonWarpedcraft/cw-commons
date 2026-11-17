@@ -1,12 +1,9 @@
 package com.crimsonwarpedcraft.cwcommons.store;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 
 /**
  * A write-behind {@link DataStore} that buffers writes in memory and flushes them to a
@@ -19,7 +16,7 @@ import java.util.concurrent.ExecutionException;
  */
 public final class ConcurrentDataStore implements DataStore {
 
-  private final RepositoryBuilder repositoryBuilder;
+  private final ThreadedRepositoryBuilder repositoryBuilder;
   private final ConcurrentHashMap<String, Repository<?, ?>> repositories =
       new ConcurrentHashMap<>();
 
@@ -28,7 +25,7 @@ public final class ConcurrentDataStore implements DataStore {
    *
    * @param repositoryBuilder the factory used to create per-namespace repositories
    */
-  ConcurrentDataStore(RepositoryBuilder repositoryBuilder) {
+  ConcurrentDataStore(ThreadedRepositoryBuilder repositoryBuilder) {
     this.repositoryBuilder = Objects.requireNonNull(repositoryBuilder);
   }
 
@@ -39,30 +36,17 @@ public final class ConcurrentDataStore implements DataStore {
     Objects.requireNonNull(namespace);
     Objects.requireNonNull(type);
     Objects.requireNonNull(keySerializer);
-    return (Repository<K, V>) repositories.computeIfAbsent(
-        namespace, k -> repositoryBuilder.create(k, type, keySerializer));
+    return repositoryBuilder.whileOpen(() -> (Repository<K, V>) repositories.computeIfAbsent(
+        namespace, k -> repositoryBuilder.create(k, type, keySerializer)));
   }
 
   @Override
   public CompletableFuture<Void> flush() {
-    List<CompletableFuture<Void>> futures = new ArrayList<>();
-    repositories.values().forEach(r -> futures.add(r.flush()));
-    return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+    return repositoryBuilder.flush();
   }
 
   @Override
   public void close() throws IOException {
-    try {
-      flush().get();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    } catch (ExecutionException e) {
-      if (e.getCause() instanceof IOException ioex) {
-        throw ioex;
-      }
-      throw new IOException("Flush failed during store close", e.getCause());
-    } finally {
-      repositoryBuilder.close();
-    }
+    repositoryBuilder.close();
   }
 }
