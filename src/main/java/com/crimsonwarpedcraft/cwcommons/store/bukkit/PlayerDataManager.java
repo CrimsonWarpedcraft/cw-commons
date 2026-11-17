@@ -6,13 +6,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.PluginManager;
 
 /**
  * Convenience wrapper around a {@link Repository} that uses {@link UUID} keys and flushes
@@ -29,19 +30,22 @@ public final class PlayerDataManager<T> implements Listener {
 
   private final Repository<UUID, T> repository;
   private final Plugin plugin;
+  private final Logger logger;
 
   /**
-   * Creates a {@link PlayerDataManager} backed by the given repository and registers it as a
-   * Bukkit event listener.
+   * Creates a {@link PlayerDataManager} backed by the given repository.
+   *
+   * <p>Call {@link #registerEvents()} explicitly to register the Bukkit event listener.
    *
    * @param repository the repository to wrap; must use {@link UUID} keys
-   * @param plugin the owning plugin, used for listener registration
+   * @param plugin the owning plugin, used for listener registration and failure logging
    */
   @SuppressFBWarnings(value = "EI_EXPOSE_REP2",
       justification = "Repository is an interface; defensive copy is not meaningful here")
   public PlayerDataManager(Repository<UUID, T> repository, Plugin plugin) {
     this.repository = Objects.requireNonNull(repository);
     this.plugin = Objects.requireNonNull(plugin);
+    this.logger = plugin.getLogger();
   }
 
   /**
@@ -73,7 +77,19 @@ public final class PlayerDataManager<T> implements Listener {
    */
   @EventHandler(priority = EventPriority.MONITOR)
   public void onPlayerQuit(PlayerQuitEvent event) {
-    repository.flush();
+    String context = "Failed to flush player data repository after quit for player "
+        + event.getPlayer().getUniqueId();
+    CompletableFuture<Void> future;
+    try {
+      future = repository.flush();
+    } catch (RuntimeException failure) {
+      logger.log(Level.SEVERE, context, failure);
+      return;
+    }
+    future.exceptionally(failure -> {
+      logger.log(Level.SEVERE, context, failure);
+      return null;
+    });
   }
 
   /**

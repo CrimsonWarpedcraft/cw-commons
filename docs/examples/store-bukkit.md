@@ -9,8 +9,8 @@ nav_order: 4
 The `store.bukkit` package connects the generic [Data Store](store.md) to the Bukkit lifecycle so
 you don't have to wire it up by hand. It provides three things:
 
-- **[`PlayerDataManager`](#playerdatamanager)** — a `Repository<UUID, V>` wrapper that flushes a
-  player's data when they disconnect.
+- **[`PlayerDataManager`](#playerdatamanager)** — a `Repository<UUID, V>` wrapper that flushes all
+  pending writes in its namespace when a player disconnects.
 - **[`AutoFlushTask`](#periodic-flushing-with-autoflushtask)** — a scheduled task that flushes the
   whole store on a timer.
 - **[`Location` / `ItemStack` serializers](#storing-bukkit-types)** — Jackson (de)serializers for the
@@ -58,6 +58,9 @@ chain it as above. Call it exactly once, in `onEnable()` — until you do, no qu
 just as asynchronous: the futures complete on the store's I/O thread, so reschedule to the main
 thread before touching the Bukkit API.
 
+Callers own error handling for the returned `get`/`save` futures; the manager does not log those
+failures for you.
+
 ```java
 import org.bukkit.entity.Player;
 
@@ -78,6 +81,9 @@ Once `registerEvents()` has run, the manager listens for `PlayerQuitEvent` and c
 `repository.flush()` when any player leaves. That flush persists **all** buffered writes in the
 namespace, not only the departing player's — which is exactly what you want, since it keeps the
 write buffer small and bounds data loss to whatever happened since the last quit.
+
+Quit-triggered flush failures are logged once through the owning plugin's logger, with the cause
+and departing player's UUID, even if the plugin is disabled before the flush completes.
 
 This is why `PlayerDataManager` alone isn't quite enough on a quiet server: if nobody leaves for an
 hour, an hour of writes sit in memory. Pair it with [`AutoFlushTask`](#periodic-flushing-with-autoflushtask)
@@ -107,6 +113,8 @@ little extra I/O for a smaller loss window.
 
 ### Custom interval
 
+Intervals must be positive; `.interval(0)` and negative values throw `IllegalArgumentException`.
+
 ```java
 // Flush every 10 minutes (12000 ticks)
 BukkitTask flushTask = AutoFlushTask.builder(store, this).interval(12000L).build().start();
@@ -115,7 +123,12 @@ BukkitTask flushTask = AutoFlushTask.builder(store, this).interval(12000L).build
 ### Post-flush callback
 
 Pass a `Runnable` to `.onFlush(...)` to run code **on the main thread** after each flush
-completes — safe for Bukkit API calls such as sending messages.
+completes successfully — safe for Bukkit API calls such as sending messages. The callback is skipped
+if the plugin is disabled before scheduling or execution. A scheduler rejection racing with disable
+is caught and logged separately from persistence failures.
+
+Periodic flush failures are logged once with their cause through the owning plugin's logger, even
+after disable, and never run the success callback.
 
 ```java
 BukkitTask flushTask = AutoFlushTask.builder(store, this)
