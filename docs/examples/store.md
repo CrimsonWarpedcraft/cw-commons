@@ -147,8 +147,9 @@ builder.
   the entry *dirty*. The value is written to the backend the next time something calls `flush()` —
   see [Flushing & lifecycle](#flushing-and-lifecycle). Batching many writes into one flush is what
   keeps the store fast.
-- **Deletes are immediate.** `delete` always removes the key from both the cache and the backend
-  right away, regardless of mode — it is never buffered.
+- **Deletes go straight to the backend.** Regardless of cache mode, `delete` calls the backend
+  first and removes the cached entry only after that call succeeds. A failed delete preserves the
+  previous cached value, including any dirty write waiting to be flushed.
 - **The cache is unbounded.** It grows as keys are loaded and written and lives for the store's
   lifetime; there is no eviction. For per-player data this is fine (it's bounded by your player
   count), but don't use a single store as a cache for millions of keys.
@@ -158,11 +159,21 @@ Each store is built with one `CacheMode`:
 | Mode | Behaviour | Use when |
 |------|-----------|----------|
 | `CACHE_AND_FLUSH` *(default)* | Caches reads; buffers writes in memory and persists them on `flush()` or `close()`. | Single-server setups — the fast, normal case. |
-| `WRITE_THROUGH_ATOMIC` | Caches reads, but persists every `put` immediately. `flush()` becomes a no-op. | One server owns the data and it must survive a crash without waiting for a flush. |
-| `NONE` | No cache at all: every read hits the backend fresh and every write goes straight through. `flush()` is a no-op. | A [database is shared by multiple servers](store-mongo.md) — each node must see the others' writes. |
+| `WRITE_THROUGH_ATOMIC` | Calls the backend for every `put`, then updates the cache on success. `flush()` still flushes the backend. | One server owns the data and the backend persists each save without waiting for a flush. |
+| `NONE` | No cache at all: every read hits the backend fresh and every write goes straight through. Flushes are delegated to the backend. | A [database is shared by multiple servers](store-mongo.md) — each node must see the others' writes. |
 
 The builder defaults to `CACHE_AND_FLUSH`. To choose another mode, pass it to `.cacheMode(...)`
 (see [Advanced](#advanced-custom-backends-and-serialization)).
+
+Failed write-through saves leave the previous cache state unchanged. Buffered flushes save dirty
+entries and then flush the backend, even when nothing is cached locally. Entries become clean only
+after **all** saves and the backend flush succeed. After a failure, dirty values remain available
+for retry; already successful saves may be repeated as idempotent replacements of the same keys.
+There is no multi-key transaction or rollback guarantee: a backend can commit a write and then
+throw, so an exception does not establish the backend's commit outcome. Durability and atomicity
+depend on the backend, and a custom buffering backend still needs flushing in write-through mode.
+These cache guarantees assume serialized operations on the decorator and its delegate (for example,
+through one store I/O executor); concurrent maps alone do not coordinate independent callers.
 
 > **Why `NONE` for a shared database?** The cache is per-process — a `WRITE_THROUGH_ATOMIC` write
 > lands in the shared database immediately, but each node keeps serving its *own* cached copy of a
