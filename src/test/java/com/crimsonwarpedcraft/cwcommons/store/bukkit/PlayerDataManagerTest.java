@@ -22,6 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.Server;
@@ -162,6 +163,18 @@ class PlayerDataManagerTest {
     assertSame(future, manager.save(mockPlayer, new Object()));
     assertSame(failure, assertThrows(CompletionException.class, future::join).getCause());
     verifyNoInteractions(mockLogger);
+  }
+
+  @Test
+  void updateCapturesUuidAndReturnsRepositoryFuture() {
+    Function<Optional<Object>, Object> transform = current -> current.orElseGet(Object::new);
+    CompletableFuture<Object> future = new CompletableFuture<>();
+    when(mockRepo.update(playerId, transform)).thenReturn(future);
+    assertSame(future, manager.update(mockPlayer, transform));
+    verify(mockPlayer).getUniqueId();
+    verify(mockRepo).update(playerId, transform);
+    verifyNoMoreInteractions(mockPlayer, mockRepo);
+    assertFalse(future.isDone());
   }
 
   @Test

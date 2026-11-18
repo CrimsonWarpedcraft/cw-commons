@@ -25,6 +25,8 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -74,6 +76,38 @@ class StoreLifecycleTest {
     order.verify(backend).save("ns", "second", "\"two\"");
     order.verify(backend).delete("ns", "first");
     order.verify(backend, times(2)).flush("ns");
+    order.verify(backend).close();
+    order.verifyNoMoreInteractions();
+  }
+
+  @Test
+  void queuedIncrementsFromMissingKeyAreAtomicAndDrainBeforeClose() throws Exception {
+    StorageBackend backend = mock(StorageBackend.class);
+    ControlledExecutor executor = new ControlledExecutor();
+    DataStore store = DataStore.builder(backend).executor(executor).closeTimeout(Duration.ZERO)
+        .build();
+    Repository<String, Integer> counts = store.repository("counts", Integer.class,
+        KeySerializers.forString());
+    List<CompletableFuture<Integer>> results = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      results.add(counts.update("key", old -> old.orElse(0) + 1));
+    }
+    final CompletableFuture<Optional<Integer>> read = counts.get("key");
+    assertThrows(IOException.class, store::close);
+    assertRejected(counts.update("key", old -> -1));
+    verifyNoInteractions(backend);
+    executor.runNext();
+    store.close();
+
+    for (int i = 0; i < results.size(); i++) {
+      assertEquals(i + 1, results.get(i).get(2, TimeUnit.SECONDS));
+    }
+    assertEquals(Optional.of(100), read.get(2, TimeUnit.SECONDS));
+    assertRejected(counts.update("key", old -> -1));
+    InOrder order = inOrder(backend);
+    order.verify(backend).load("counts", "key");
+    order.verify(backend).save("counts", "key", "100");
+    order.verify(backend).flush("counts");
     order.verify(backend).close();
     order.verifyNoMoreInteractions();
   }

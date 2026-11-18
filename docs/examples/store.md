@@ -144,6 +144,26 @@ stored. `getAll()` returns every entry in the namespace as a `Map<K, V>`.
 Failures (e.g. a backend I/O error) surface as an **exceptional completion** wrapping the underlying
 `IOException`; attach `.exceptionally(...)` if you need to handle them.
 
+### Atomic updates (next release)
+
+Use `update` when the new value depends on the old one. Two separate `get`/`put` calls can both
+read the same count and lose an increment. The built-in repository reads, transforms and saves
+within one turn of the store's I/O lane. The future returns the new value:
+
+```java
+CompletableFuture<Integer> updated = killCounts.update(playerId, old -> old.orElse(0) + 1);
+```
+
+The transform must return a non-null value; use `delete` to remove an entry. If reading,
+transforming or serializing fails, no save is attempted. Keep the transform short: do not access
+Bukkit or wait on any future from the same store. `CACHE_AND_FLUSH` acknowledges the cached value;
+flush to persist it. Other modes acknowledge the backend save, with the same failure and durability
+semantics as `put`. This coordinates operations **only on this store instance**, even with caching
+disabled. It is not a transaction across servers or independent stores.
+
+`update` isn't in `v0.3.4`. Custom `Repository` implementations that do not override it return
+a future failed with `UnsupportedOperationException`.
+
 ## Caching and write policies
 
 The `CachingBackend` is what makes the store "write-behind", and it's worth understanding because it
