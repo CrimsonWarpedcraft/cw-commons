@@ -9,8 +9,10 @@ nav_order: 3
 `DataStore` is an **asynchronous, write-behind key-value store**. You read and write Java objects
 keyed by anything you can turn into a string; behind the scenes the store serializes them to JSON,
 caches them in memory, and flushes them to a backend (SQLite or MongoDB) in one serial I/O lane.
-By default that lane uses a dedicated daemon thread, keeping I/O off the main thread. A custom
-direct executor such as `Runnable::run` instead runs I/O on its caller.
+By default that lane uses a dedicated daemon thread, keeping repository I/O off the main thread.
+A custom direct executor such as `Runnable::run` instead runs I/O on its caller.
+
+SQLite construction opens the file and initializes its schema synchronously on the calling thread.
 
 This page covers the concepts and the bundled SQLite backend. Once you understand it, wiring up the
 [Bukkit helpers](store-bukkit.md) or swapping in [MongoDB](store-mongo.md) is a small step.
@@ -50,6 +52,12 @@ common case — see [custom setups](#advanced-custom-backends-and-serialization)
 | Repository | `Repository<K, V>` | A typed view over one namespace. Serializes keys/values and hands work to the I/O thread. |
 | Cache | `CachingBackend` | Keeps loaded/written values in memory and buffers writes — see [Caching & write policies](#caching-and-write-policies). |
 | Backend | `StorageBackend` → `SqliteBackend` / `MongoDbBackend` | The actual persistence: a SQLite file or a MongoDB database. |
+
+Backend construction owns any connection or client it acquires: failed initialization closes it,
+preserving the original failure and suppressing cleanup failures. Successful construction keeps it
+open until the backend is closed. SQLite-JDBC is bundled without relocation; MongoDB's driver is
+optional and unbundled, and [MongoDB construction is lazy](store-mongo.md#setup), not a connectivity
+or authentication check.
 
 ## Quick start
 
