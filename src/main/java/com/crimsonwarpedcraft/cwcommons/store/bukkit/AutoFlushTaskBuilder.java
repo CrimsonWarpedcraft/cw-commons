@@ -33,18 +33,23 @@ public final class AutoFlushTaskBuilder {
   /**
    * Sets how often the store is flushed, in server ticks.
    *
-   * @param intervalTicks the flush interval in ticks
+   * @param intervalTicks the positive flush interval in ticks
    * @return this builder
+   * @throws IllegalArgumentException if the interval is zero or negative
    */
   public AutoFlushTaskBuilder interval(long intervalTicks) {
+    if (intervalTicks <= 0) {
+      throw new IllegalArgumentException("intervalTicks must be positive");
+    }
     this.intervalTicks = intervalTicks;
     return this;
   }
 
   /**
-   * Sets a callback run on the Bukkit main thread after each flush completes.
+   * Sets a callback run on the Bukkit main thread after each successful flush.
    *
-   * <p>Because it runs on the main thread, it may safely call the Bukkit API.
+   * <p>Because it runs on the main thread, it may safely call the Bukkit API. The callback is
+   * skipped if the plugin is disabled before it can be scheduled or executed.
    *
    * @param onFlush the post-flush callback
    * @return this builder

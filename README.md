@@ -52,7 +52,7 @@ The three areas below are independent — depend on one, two, or all of them. Ea
   shared across servers stays coherent (every read hits the backend fresh).
 - **`KeySerializers`** — UUID and String keys out of the box; implement `KeySerializer<K>` for any
   other key type.
-- **Bukkit helpers** — `PlayerDataManager` (flushes a player's data on `PlayerQuitEvent`),
+- **Bukkit helpers** — `PlayerDataManager` (flushes its repository namespace on `PlayerQuitEvent`),
   `AutoFlushTask` (periodic flush via the Bukkit scheduler), and `BukkitDataStoreBuilder`, which
   assembles a managed SQLite store with sensible defaults in one line.
 

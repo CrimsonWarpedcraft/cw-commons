@@ -2,7 +2,11 @@ package com.crimsonwarpedcraft.cwcommons.store.bukkit;
 
 import com.crimsonwarpedcraft.cwcommons.store.DataStore;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
 
 /**
@@ -13,7 +17,9 @@ import org.bukkit.scheduler.BukkitTask;
  * before calling {@link DataStore#close()}.
  *
  * <p>An optional {@code onFlush} callback is executed on the Bukkit main thread after each
- * flush completes, making it safe to call the Bukkit API (e.g. sending admin notifications).
+ * successful flush, making it safe to call the Bukkit API (e.g. sending admin notifications).
+ * Callbacks are skipped if the plugin is disabled before scheduling or execution. Flush failures
+ * are logged even if the plugin has since been disabled.
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */
@@ -30,6 +36,9 @@ public final class AutoFlushTask {
   AutoFlushTask(DataStore store, Plugin plugin, long intervalTicks, Runnable onFlush) {
     this.store = Objects.requireNonNull(store);
     this.plugin = Objects.requireNonNull(plugin);
+    if (intervalTicks <= 0) {
+      throw new IllegalArgumentException("intervalTicks must be positive");
+    }
     this.intervalTicks = intervalTicks;
     this.onFlush = Objects.requireNonNull(onFlush);
   }
@@ -53,12 +62,45 @@ public final class AutoFlushTask {
    * @return the scheduled task
    */
   public BukkitTask start() {
-    return plugin.getServer().getScheduler().runTaskTimer(
+    BukkitScheduler scheduler = plugin.getServer().getScheduler();
+    Logger logger = plugin.getLogger();
+    return scheduler.runTaskTimer(
         plugin,
-        () -> store.flush().thenRun(
-            () -> plugin.getServer().getScheduler().runTask(plugin, onFlush)),
+        () -> flush(scheduler, logger),
         intervalTicks,
         intervalTicks
     );
+  }
+
+  private void flush(BukkitScheduler scheduler, Logger logger) {
+    CompletableFuture<Void> future;
+    try {
+      future = store.flush();
+    } catch (RuntimeException failure) {
+      logFlushFailure(logger, failure);
+      return;
+    }
+    future.handle((ignored, failure) -> {
+      if (failure != null) {
+        logFlushFailure(logger, failure);
+      } else if (plugin.isEnabled()) {
+        try {
+          scheduler.runTask(plugin, () -> {
+            if (plugin.isEnabled()) {
+              onFlush.run();
+            }
+          });
+        } catch (RuntimeException schedulingFailure) {
+          // Disabling the plugin can race with the enabled check above.
+          logger.log(Level.WARNING, "Failed to schedule auto-flush success callback",
+              schedulingFailure);
+        }
+      }
+      return null;
+    });
+  }
+
+  private void logFlushFailure(Logger logger, Throwable failure) {
+    logger.log(Level.SEVERE, "Failed to flush data store during periodic auto-flush", failure);
   }
 }
