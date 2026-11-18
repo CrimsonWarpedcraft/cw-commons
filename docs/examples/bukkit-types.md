@@ -18,10 +18,14 @@ works" wherever it appears:
 
 ### `Location`
 
-A YAML object. `world` is the world *name* (or `null` if the location has no world); `x`/`y`/`z`
-are doubles and `yaw`/`pitch` are floats. `world`, `x`, `y`, and `z` are **required**; `yaw` and
-`pitch` are optional and default to `0`. On a config field you can require them with
-[`@RequireOrientation`](config-loading.md#requiring-orientation).
+A YAML object. `world` is an optional world *name*: omitted, null and unloaded worlds all produce
+a location without a world. Require a loaded one with `@WorldExists`. Coordinates `x`, `y`, `z`
+are required doubles. `yaw` and `pitch` are floats; omitted or null values default to `0` unless
+the config field has [`@RequireOrientation`](config-loading.md#requiring-orientation).
+
+**Next release:** all five numeric fields accept finite numbers (including quoted decimals).
+Malformed values, explicit NaN/infinity, and values that overflow their target type fail binding
+with the field name instead of silently defaulting to zero.
 
 ```yaml
 world: world

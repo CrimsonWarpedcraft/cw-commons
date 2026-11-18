@@ -67,13 +67,25 @@ public final class ConfigManager implements AutoCloseable {
    * @param configFile the file to load
    * @param clazz the config class
    * @return the validated configuration
-   * @throws IOException if the file cannot be read or parsed
+   * @throws IOException if the file cannot be read or bound to a non-null config
    * @throws IllegalStateException if the manager is closed or the config fails validation
    */
   public synchronized <T extends Config> T load(File configFile, Class<T> clazz)
       throws IOException {
     ensureOpen();
-    T config = mapper.readValue(Objects.requireNonNull(configFile), Objects.requireNonNull(clazz));
+    Objects.requireNonNull(configFile);
+    Objects.requireNonNull(clazz);
+    T config;
+    try {
+      config = mapper.readValue(configFile, clazz);
+    } catch (IOException e) {
+      throw new IOException("Cannot load " + configFile + " as " + clazz.getSimpleName()
+          + ": " + e.getMessage(), e);
+    }
+    if (config == null) {
+      throw new IOException("Cannot load " + configFile + " as " + clazz.getSimpleName()
+          + ": expected a configuration object, but the document is empty or null");
+    }
     validate(config);
     return config;
   }

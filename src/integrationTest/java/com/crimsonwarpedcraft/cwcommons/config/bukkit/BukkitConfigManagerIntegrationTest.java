@@ -3,6 +3,7 @@ package com.crimsonwarpedcraft.cwcommons.config.bukkit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
@@ -23,6 +24,19 @@ class BukkitConfigManagerIntegrationTest {
   record LocationConfig(Location spawn) implements Config {}
 
   record OrientedConfig(@RequireOrientation Location spawn) implements Config {}
+
+  @Test
+  void badNestedCoordinateNamesFileAndProperty(@TempDir Path dir) throws IOException {
+    Path file = dir.resolve("spawn.yml");
+    Files.writeString(file, "spawn:\n  x: potato\n  y: 64\n  z: 2\n");
+    try (ConfigManager manager = new BukkitConfigManagerBuilder().build()) {
+      IOException error = assertThrows(IOException.class,
+          () -> manager.load(file.toFile(), LocationConfig.class));
+      assertTrue(error.getMessage().contains(file.toString()));
+      assertTrue(error.getMessage().contains("[\"spawn\"]"));
+      assertTrue(error.getMessage().contains("[\"x\"]"));
+    }
+  }
 
   @Test
   void loadsLocationFromYamlWithLoadedWorld(@TempDir Path dir) throws IOException {

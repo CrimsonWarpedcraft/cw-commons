@@ -1,9 +1,11 @@
 package com.crimsonwarpedcraft.cwcommons.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import java.io.IOException;
@@ -11,6 +13,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class ConfigManagerIntegrationTest {
 
@@ -48,8 +52,23 @@ class ConfigManagerIntegrationTest {
     Path configFile = writeConfig("message: [unterminated\n");
 
     try (ConfigManager manager = ConfigManager.builder().build()) {
-      assertThrows(IOException.class,
+      IOException error = assertThrows(IOException.class,
           () -> manager.load(configFile.toFile(), TestConfig.class));
+      assertTrue(error.getMessage().contains(configFile.toString()));
+      assertInstanceOf(JsonProcessingException.class, error.getCause());
+      assertTrue(error.getMessage().contains("line"));
+    }
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"", "# comment only\n", "null\n", "~\n", "[one, two]\n", "true\n"})
+  void rejectsEmptyNullOrWrongShapeWithFileContext(String yaml) throws IOException {
+    Path file = writeConfig(yaml);
+    try (ConfigManager manager = ConfigManager.builder().build()) {
+      IOException error = assertThrows(IOException.class,
+          () -> manager.load(file.toFile(), TestConfig.class));
+      assertTrue(error.getMessage().contains(file.toString()));
+      assertTrue(error.getMessage().contains("TestConfig"));
     }
   }
 

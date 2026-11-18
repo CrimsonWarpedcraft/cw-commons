@@ -16,6 +16,9 @@ deep in your plugin later.
 > try-with-resources examples. No dependency tag change is implied.
 
 - `load(...)` throws **`IOException`** if the file is missing, unreadable, or not valid YAML.
+- **Next release:** empty or null documents and values that cannot bind to the config type are
+  also reported as `IOException`. The message identifies the file and target type, with Jackson's
+  field path or parser position when available. The original read/binding exception is the cause.
 - `load(...)` and `validate(...)` throw **`IllegalStateException`** if any constraint is violated.
   The message lists every offending property, e.g.
   `Invalid configuration: maxPlayers: must be less than or equal to 100`.
