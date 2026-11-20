@@ -3,13 +3,13 @@ package com.crimsonwarpedcraft.cwcommons.store;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 /**
  * Asynchronous key-value store for a single document type.
  *
  * <p>Obtain an instance from {@link DataStore#repository}. All operations return
- * {@link CompletableFuture}s; failures are delivered as exceptional completions wrapping the
- * underlying {@link java.io.IOException}.
+ * {@link CompletableFuture}s; I/O and transformation failures complete the future exceptionally.
  *
  * <p>Once the store starts closing, all operations on existing handles return exceptionally
  * completed futures with {@link java.util.concurrent.RejectedExecutionException}. Previously
@@ -54,6 +54,30 @@ public interface Repository<K, V> {
    * @return a future completing when the write is acknowledged
    */
   CompletableFuture<Void> put(K key, V value);
+
+  /**
+   * Reads the current value, applies a transform, and writes its non-null result as one operation
+   * relative to all other operations submitted through the same store instance. This does not
+   * coordinate independent stores or processes sharing a backend.
+   *
+   * <p>The transform receives an empty optional for a missing key. It runs in the store's I/O
+   * lane: keep it short, avoid Bukkit API calls, and never wait for another operation on this
+   * store. If the transform throws, returns null, or its result cannot be serialized, no write
+   * is attempted. A backend failure has the same semantics as for {@link #put}.
+   *
+   * <p>With buffered writes the future acknowledges the cached result; use {@link #flush} to
+   * persist pending writes. Other modes acknowledge the backend's save. Custom repositories that
+   * do not implement atomic updates return a failed future with
+   * {@link UnsupportedOperationException}.
+   *
+   * @param key the key to update
+   * @param transform function producing the value to store (null does not mean delete)
+   * @return a future completing with the acknowledged new value
+   */
+  default CompletableFuture<V> update(K key, Function<Optional<V>, V> transform) {
+    return CompletableFuture.failedFuture(
+        new UnsupportedOperationException("This repository does not support atomic updates"));
+  }
 
   /**
    * Removes the value associated with the given key, if any.

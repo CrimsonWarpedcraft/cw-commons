@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.entity.Player;
@@ -19,8 +20,8 @@ import org.bukkit.plugin.Plugin;
  * Convenience wrapper around a {@link Repository} that uses {@link UUID} keys and flushes
  * pending writes when a player disconnects.
  *
- * <p>Register an instance in {@code onEnable()} and use {@link #get}/{@link #save} in place of
- * the raw repository. All pending writes are flushed to the backend on each
+ * <p>Register an instance in {@code onEnable()} and use {@link #get}, {@link #save}, or
+ * {@link #update} in place of the raw repository. All pending writes are flushed on each
  * {@link PlayerQuitEvent}.
  *
  * @param <T> the per-player data type
@@ -68,6 +69,20 @@ public final class PlayerDataManager<T> implements Listener {
   public CompletableFuture<Void> save(Player player, T data) {
     return repository.put(
         Objects.requireNonNull(player).getUniqueId(), Objects.requireNonNull(data));
+  }
+
+  /**
+   * Updates a player's data using {@link Repository#update}. Call from a Bukkit-safe context:
+   * the UUID is obtained on the caller, but the transform runs on the store's I/O lane and must
+   * not access the player. The caller owns observation of the returned future.
+   *
+   * @param player the player to update
+   * @param transform function producing the non-null new data
+   * @return a future completing with the acknowledged new value
+   */
+  public CompletableFuture<T> update(Player player, Function<Optional<T>, T> transform) {
+    return repository.update(
+        Objects.requireNonNull(player).getUniqueId(), Objects.requireNonNull(transform));
   }
 
   /**

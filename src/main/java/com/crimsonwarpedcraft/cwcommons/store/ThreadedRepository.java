@@ -1,11 +1,13 @@
 package com.crimsonwarpedcraft.cwcommons.store;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 final class ThreadedRepository<K, V> implements Repository<K, V> {
 
@@ -34,13 +36,12 @@ final class ThreadedRepository<K, V> implements Repository<K, V> {
   @Override
   public CompletableFuture<Optional<V>> get(K key) {
     String rawKey = keySerializer.serialize(Objects.requireNonNull(key));
-    return scheduler.submit(() -> {
-      Optional<String> json = backend.load(namespace, rawKey);
-      if (json.isEmpty()) {
-        return Optional.empty();
-      }
-      return Optional.of(mapper.readValue(json.get(), valueType));
-    });
+    return scheduler.submit(() -> load(rawKey));
+  }
+
+  private Optional<V> load(String rawKey) throws IOException {
+    Optional<String> json = backend.load(namespace, rawKey);
+    return json.isEmpty() ? Optional.empty() : Optional.of(mapper.readValue(json.get(), valueType));
   }
 
   @Override
@@ -73,6 +74,17 @@ final class ThreadedRepository<K, V> implements Repository<K, V> {
     return scheduler.submit(() -> {
       backend.delete(namespace, rawKey);
       return null;
+    });
+  }
+
+  @Override
+  public CompletableFuture<V> update(K key, Function<Optional<V>, V> transform) {
+    String rawKey = keySerializer.serialize(Objects.requireNonNull(key));
+    Objects.requireNonNull(transform);
+    return scheduler.submit(() -> {
+      V updated = Objects.requireNonNull(transform.apply(load(rawKey)), "update returned null");
+      backend.save(namespace, rawKey, mapper.writeValueAsString(updated));
+      return updated;
     });
   }
 

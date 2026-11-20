@@ -12,6 +12,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 abstract class AbstractDataStoreIntegrationTest {
 
@@ -120,6 +122,28 @@ abstract class AbstractDataStoreIntegrationTest {
 
       writer.save(namespace(), "key", "\"second\"");
       assertEquals("second", repository.get("key").get().orElseThrow());
+    }
+  }
+
+  @ParameterizedTest
+  @EnumSource(CacheMode.class)
+  void updatesRespectCacheModeAndSurviveReopen(CacheMode mode) throws Exception {
+    try (StorageBackend observer = openBackend();
+        DataStore store = openStore(mode)) {
+      var counts = store.repository(namespace(), Integer.class, KeySerializers.forString());
+      assertEquals(1, counts.update("key", old -> old.orElse(0) + 1).get());
+      assertEquals(2, counts.update("key", old -> old.orElseThrow() + 1).get());
+      if (mode == CacheMode.CACHE_AND_FLUSH) {
+        assertTrue(observer.load(namespace(), "key").isEmpty());
+      } else {
+        assertEquals("2", observer.load(namespace(), "key").orElseThrow());
+      }
+      counts.flush().get();
+      assertEquals("2", observer.load(namespace(), "key").orElseThrow());
+    }
+    try (DataStore reopened = openStore(CacheMode.NONE)) {
+      var counts = reopened.repository(namespace(), Integer.class, KeySerializers.forString());
+      assertEquals(2, counts.get("key").get().orElseThrow());
     }
   }
 

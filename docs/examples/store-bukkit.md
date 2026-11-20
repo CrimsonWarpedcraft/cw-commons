@@ -75,6 +75,19 @@ manager.get(player).thenAccept(maybeStats -> {
 manager.save(player, new PlayerStats(5, 2));
 ```
 
+**Next release:** for a read/modify/write, call `manager.update` from the Bukkit thread. It takes
+the UUID immediately. The transform runs in the store's I/O lane, so it must not use `player` or
+wait for another store operation. Observe the returned future as you would for `save`:
+
+```java
+CompletableFuture<PlayerStats> updated = manager.update(player, current -> {
+    PlayerStats stats = current.orElseGet(PlayerStats::new);
+    return new PlayerStats(stats.kills() + 1, stats.deaths());
+});
+```
+
+See [atomic updates](store.md#atomic-updates-next-release) for scope and persistence guarantees.
+
 ### Auto-flush on quit
 
 Once `registerEvents()` has run, the manager listens for `PlayerQuitEvent` and calls
