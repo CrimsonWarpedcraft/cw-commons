@@ -18,12 +18,12 @@ dependencies {
 }
 ```
 
-Replace `VERSION` with a release tag (e.g. `v1.0.0`) or `main-SNAPSHOT` for the latest unreleased
-build from `main`. Browse the available versions on the
-[JitPack page](https://jitpack.io/#CrimsonWarpedcraft/cw-commons).
+Replace `VERSION` with a [published tag](https://github.com/CrimsonWarpedcraft/cw-commons/releases).
+Use `main-SNAPSHOT` only when you want the development build. Browse artifacts on
+[JitPack](https://jitpack.io/#CrimsonWarpedcraft/cw-commons).
 
-cw-commons targets **Java 25** and is built against the Paper API, so it runs on any Paper-compatible
-server.
+The `v0.4.0` baseline is **Java 25** and **Paper 26.3**. If your plugin uses `v0.3.4`, see the
+[upgrade notes](releases.md) before adopting the new APIs.
 
 ## Transitive dependencies
 

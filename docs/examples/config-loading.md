@@ -11,14 +11,13 @@ Java object with Jackson, and validates that object against its JSR-380 constrai
 If anything is wrong you find out immediately, in `onEnable()`, instead of hitting a bad value
 deep in your plugin later.
 
-> **Unreleased / next release:** the manager lifecycle examples on this page require the upcoming
-> `AutoCloseable` API. Current stable `v0.3.4` has no `ConfigManager.close()` and cannot use these
-> try-with-resources examples. No dependency tag change is implied.
+The try-with-resources examples require cw-commons `v0.4.0` or later. In `v0.3.4`,
+`ConfigManager` has no `close()` method.
 
-- `load(...)` throws **`IOException`** if the file is missing, unreadable, or not valid YAML.
-- **Next release:** empty or null documents and values that cannot bind to the config type are
-  also reported as `IOException`. The message identifies the file and target type, with Jackson's
-  field path or parser position when available. The original read/binding exception is the cause.
+- In `v0.4.0`, `load(...)` throws **`IOException`** for missing or unreadable files, empty or null
+  documents, malformed YAML, and values that cannot bind to the config type. The message names
+  the file and target type. If Jackson reports an error, its field path or parser position is
+  included when available, and the original exception is preserved as the cause.
 - `load(...)` and `validate(...)` throw **`IllegalStateException`** if any constraint is violated.
   The message lists every offending property, e.g.
   `Invalid configuration: maxPlayers: must be less than or equal to 100`.
@@ -104,7 +103,9 @@ try (ConfigManager manager = new BukkitConfigManagerBuilder().build()) {
 }
 ```
 
-## Manager lifetime (next release)
+<a id="manager-lifetime-next-release"></a>
+
+## Manager lifetime
 
 Each default manager owns a Jakarta `ValidatorFactory` and keeps it open for its entire usable
 lifetime. Use try-with-resources for one-shot loading as above; closing the manager does not

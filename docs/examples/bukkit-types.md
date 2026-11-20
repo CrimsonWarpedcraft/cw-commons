@@ -23,9 +23,9 @@ a location without a world. Require a loaded one with `@WorldExists`. Coordinate
 are required doubles. `yaw` and `pitch` are floats; omitted or null values default to `0` unless
 the config field has [`@RequireOrientation`](config-loading.md#requiring-orientation).
 
-**Next release:** all five numeric fields accept finite numbers (including quoted decimals).
-Malformed values, explicit NaN/infinity, and values that overflow their target type fail binding
-with the field name instead of silently defaulting to zero.
+In `v0.4.0`, all five numeric fields reject malformed values, explicit NaN or infinity, and values
+that overflow their target type. Binding errors name the field. Quoted decimals such as `"64.5"`
+are still accepted.
 
 ```yaml
 world: world
@@ -64,9 +64,8 @@ A top-level `==` is optional, so a hand-written item needs only `type` (plus opt
 Declare `Location` and `ItemStack` fields like any other and load with
 `new BukkitConfigManagerBuilder().build()`:
 
-> **Unreleased / next release:** this lifecycle example uses `ConfigManager` as `AutoCloseable`.
-> Current stable `v0.3.4` does not support this API. See
-> [manager lifetime](config-loading.md#manager-lifetime-next-release).
+The try-with-resources example requires cw-commons `v0.4.0` or later. See
+[manager lifetime](config-loading.md#manager-lifetime) if you also support config reloads.
 
 ```java
 import com.crimsonwarpedcraft.cwcommons.config.Config;

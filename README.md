@@ -43,13 +43,13 @@ The three areas below are independent — depend on one, two, or all of them. Ea
 ### Data storage ([guide](https://cw-commons.crimsonwarpedcraft.com/examples/store.html))
 
 - **`DataStore`** — asynchronous, write-behind key-value store split into namespaced `Repository`
-  views. Reads and writes return `CompletableFuture` and never touch disk on the main thread; writes
-  are buffered in memory and flushed off-thread.
+  views. By default, one dedicated thread handles repository I/O. Use `Repository.update` to
+  read, change, and save a value without losing concurrent updates through the same store.
 - **Pluggable backends** — `SqliteBackend` is bundled and zero-config; `MongoDbBackend` is a drop-in
   alternative behind the same API (needs the optional MongoDB driver).
 - **`CacheMode`** — `CACHE_AND_FLUSH` (default) batches writes until a flush; `WRITE_THROUGH_ATOMIC`
-  persists every write immediately for crash-safety; `NONE` disables caching entirely so a database
-  shared across servers stays coherent (every read hits the backend fresh).
+  updates the cache after the backend save succeeds; `NONE` bypasses the cache on every read and
+  write. Durability depends on the backend.
 - **`KeySerializers`** — UUID and String keys out of the box; implement `KeySerializer<K>` for any
   other key type.
 - **Bukkit helpers** — `PlayerDataManager` (flushes its repository namespace on `PlayerQuitEvent`),
@@ -73,9 +73,9 @@ dependencies {
 }
 ```
 
-Replace `VERSION` with a release tag (e.g. `v1.0.0`) or `main-SNAPSHOT` for the latest
-unreleased build from `main`. cw-commons targets **Java 25** and is built against the Paper API,
-so it runs on any Paper-compatible server.
+Replace `VERSION` with a [published tag](https://github.com/CrimsonWarpedcraft/cw-commons/releases),
+or use `main-SNAPSHOT` to test the development branch. The `v0.4.0` baseline is **Java 25** and
+**Paper 26.3**. See the [release and upgrade notes](docs/releases.md) for changes from `v0.3.4`.
 
 Jackson, Hibernate Validator, and Jakarta Validation are provided as transitive dependencies —
 no need to declare them separately. If you shade your plugin, include and relocate them under
@@ -87,8 +87,7 @@ included — shade it in your own plugin as you normally would, and it will be c
 
 ### Config loading
 
-> **Unreleased / next release:** the lifecycle example below uses `AutoCloseable`, which is not
-> available on `ConfigManager` in the current stable `v0.3.4`.
+The try-with-resources example requires cw-commons `v0.4.0` or later.
 
 ```java
 // Define your config POJO
@@ -108,14 +107,14 @@ try (ConfigManager manager = new BukkitConfigManagerBuilder().build()) {
 }
 ```
 
-`ConfigManager` throws `IOException` if the file cannot be read and `IllegalStateException` if any
-declared constraint is violated.
+`load` throws `IOException` if the file cannot be read or bound to the config type, and
+`IllegalStateException` if the config violates a declared constraint.
 
-In the next release, close the manager after its last load/validation to release its default
+Close the manager after its last load or validation to release its default
 validator factory; the loaded config remains usable. For reloads, retain the manager until
 `onDisable()` instead. A validator supplied with `.validator(...)` remains caller-owned: keep its
 factory open until all users are done, then close that factory yourself. See the
-[lifecycle guide](docs/examples/config-loading.md#manager-lifetime-next-release).
+[lifecycle guide](docs/examples/config-loading.md#manager-lifetime).
 
 ### Validating Bukkit locations
 

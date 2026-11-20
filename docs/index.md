@@ -24,7 +24,7 @@ data storage** — behind small, well-tested APIs so each plugin can focus on it
   `Command` registration interface, so every command in every plugin is declared and registered
   the same way. See [Commands](examples/commands.md).
 - **`DataStore`** — an asynchronous, write-behind key-value store split into namespaced
-  `Repository` instances. Writes are buffered in memory and flushed to disk off the main thread.
+  `Repository` instances. By default, writes are buffered in memory and flushed on a dedicated thread.
   SQLite is bundled; MongoDB is a drop-in alternative behind the same API. Optional Bukkit helpers
   cover per-player data, periodic flushing, and `Location`/`ItemStack` serialization. Start with
   the [Data Store](examples/store.md) guide.
@@ -42,6 +42,7 @@ The three packages are independent — use one, two, or all of them:
 ## Documentation
 
 - **[Getting Started](getting-started.md)** — add cw-commons as a dependency.
+- **[Release notes](releases.md)** — see what changed in `v0.4.0` and how to upgrade from `v0.3.4`.
 - **[Examples](examples/index.md)** — task-focused guides for config, commands, and storage.
 - **[API Reference](https://jitpack.io/com/github/CrimsonWarpedcraft/cw-commons/latest/javadoc/)** —
   full Javadoc for the latest release, hosted by JitPack.

@@ -73,6 +73,7 @@ public interface Repository<K, V> {
    * @param key the key to update
    * @param transform function producing the value to store (null does not mean delete)
    * @return a future completing with the acknowledged new value
+   * @since 0.4.0
    */
   default CompletableFuture<V> update(K key, Function<Optional<V>, V> transform) {
     return CompletableFuture.failedFuture(
@@ -90,8 +91,8 @@ public interface Repository<K, V> {
   /**
    * Flushes all pending writes to the underlying backend immediately.
    *
-   * <p>This is a no-op for repositories using {@link CacheMode#WRITE_THROUGH_ATOMIC} or
-   * {@link CacheMode#NONE}, which never buffer writes.
+   * <p>{@link CacheMode#WRITE_THROUGH_ATOMIC} and {@link CacheMode#NONE} do not buffer writes
+   * in the store. Flushing still delegates to the backend, which may do its own buffering.
    *
    * @return a future completing when all dirty entries have been persisted
    */

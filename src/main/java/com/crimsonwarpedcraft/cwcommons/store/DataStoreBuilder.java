@@ -133,6 +133,7 @@ public class DataStoreBuilder {
    * @param closeTimeout a non-negative duration representable in nanoseconds
    * @return this builder
    * @throws IllegalArgumentException if the duration is negative or too large
+   * @since 0.4.0
    */
   public DataStoreBuilder closeTimeout(Duration closeTimeout) {
     Objects.requireNonNull(closeTimeout);
