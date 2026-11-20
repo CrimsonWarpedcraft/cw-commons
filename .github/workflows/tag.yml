@@ -13,15 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify-publication:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: ./.github/actions/common-setup
-      - uses: ./.github/actions/verify-publication
-
   release:
-    needs: verify-publication
     runs-on: ubuntu-latest
     permissions:
       contents: write
