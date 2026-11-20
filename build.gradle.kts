@@ -190,18 +190,10 @@ tasks.withType<SpotBugsTask>().configureEach {
 
 tasks.named<ShadowJar>("shadowJar") {
     archiveClassifier.set("")
-    // Preserve duplicate service descriptors so the transformer can merge every provider.
-    filesMatching("META-INF/services/**") {
-        duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    }
-    mergeServiceFiles()
-    exclude("com/fasterxml/**")
-    exclude("org/yaml/**")
-    exclude("org/hibernate/**")
-    exclude("jakarta/**")
-    exclude("org/jboss/**")
-    minimize {
-        exclude(dependency("org.xerial:sqlite-jdbc:.*"))
+    // Bundle the complete SQLite driver (including SPI and natives). Select by artifact so
+    // resources and multi-release classes from the unbundled API libraries cannot leak in.
+    dependencies {
+        include(dependency(libs.sqlite.jdbc.get()))
     }
 }
 

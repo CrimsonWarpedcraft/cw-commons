@@ -93,6 +93,34 @@ test process and supplies these variables automatically.
 > **Windows / OneDrive:** if `gradlew build` fails with an access-denied error on `build/`, see the
 > workaround in [`CLAUDE.md`](CLAUDE.md#windows--onedrive-quirk).
 
+### Verify a Maven candidate against the plugin template
+
+The Ubuntu/Windows build checks stage the real `shadow` Maven publication in a fresh repository.
+They check the JAR (including multi-release classes, JDBC service and native libraries), its
+Javadoc artifact and the exact compile dependencies in the POM. Then the pinned template runs its
+unit, integration and isolated shaded-JAR tests. This check uses local SQLite and needs no server.
+
+To reproduce with JDK 25 and Python 3.11+ (from the commons root, Bash):
+
+```bash
+repo=$(mktemp -d)
+version=0.0.0-CI-LOCAL
+publish=(publishToMavenLocal "-Dmaven.repo.local=$repo" "-Pver=v$version")
+./gradlew "${publish[@]}"
+./gradlew "${publish[@]}" -I ci/jitpack-group.init.gradle
+python3 ci/verify_publication.py "$repo" "$version"
+
+# Set template to a checkout of the commit pinned in .github/actions/verify-publication/action.yml.
+"$template/gradlew" -p "$template" -I "$PWD/ci/template-candidate.init.gradle" \
+  "-PcandidateRepo=$repo" "-PcandidateVersion=$version" \
+  verifyCandidateResolution build integrationTest artifactTest --no-build-cache
+```
+
+The second publish uses the same artifacts and POM generation under JitPack's consumer group.
+This matters because the template's Shadow minimization rules match the group and module name.
+The consumer init script restricts that module to the temporary repository, selects the candidate,
+and checks the resolved bytes against the native publication. No template edits are required.
+
 ## Code & test conventions
 
 - **Javadoc** is required on public API; package-private classes are exempt.

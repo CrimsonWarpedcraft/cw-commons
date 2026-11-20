@@ -149,11 +149,12 @@ subclass) builds a `ConfigManager` with `BukkitModule` registered, so config cla
 
 ## Shadow JAR
 
-SQLite-JDBC is bundled in the shadow JAR but not relocated (native code requires stable paths).
-
-Jackson, Hibernate Validator, and Jakarta Validation are declared as `api` deps — they are **not**
-bundled. Consumers receive them transitively via JitPack and should relocate them when shading their
-own plugin. Test code uses the original package paths.
+SQLite-JDBC is the only dependency included in the shadow JAR. Keep its entire driver, native
+resources and JDBC service descriptor at their original paths. Jackson YAML and Hibernate Validator
+are `api` dependencies; they and their transitives (including Jakarta Validation) are supplied by
+the published POM. Consumers can relocate them when shading a plugin. See the
+[publication check](CONTRIBUTING.md#verify-a-maven-candidate-against-the-plugin-template) for the
+CI-only template dependency substitution and how to exercise it locally.
 
 ## Checkstyle notes
 

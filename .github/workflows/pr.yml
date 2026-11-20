@@ -41,12 +41,17 @@ jobs:
           name: ${{ matrix.os }} Java ${{ matrix.java }} build results
           path: ${{ github.workspace }}/build/libs/
 
+      - name: Verify candidate publication and downstream plugin
+        uses: ./.github/actions/verify-publication
+
       - name: Upload test results
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.os }} Java ${{ matrix.java }} test results
-          path: ${{ github.workspace }}/build/reports/
+          path: |
+            build/reports/
+            template-fixture/build/reports/tests/
 
   integration-test:
     name: Run integration tests

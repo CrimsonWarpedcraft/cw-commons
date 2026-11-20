@@ -13,7 +13,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  verify-publication:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/common-setup
+      - uses: ./.github/actions/verify-publication
+
   release:
+    needs: verify-publication
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -63,7 +71,7 @@ jobs:
         run: echo "PROJECT_NAME=$(${{github.workspace}}/gradlew -q printProjectName)" >> $GITHUB_ENV
 
       - name: Notify on success
-        if: success()
+        if: success() && needs.release.result == 'success'
         uses: appleboy/discord-action@v1.2.0
         with:
           webhook_id: ${{ vars.DISCORD_WEBHOOK_ID }}
@@ -75,7 +83,7 @@ jobs:
             ${{ needs.release.outputs.url }}
 
       - name: Notify on failure
-        if: failure()
+        if: ${{ !cancelled() && needs.release.result != 'success' }}
         uses: appleboy/discord-action@v1.2.0
         with:
           webhook_id: ${{ vars.DISCORD_WEBHOOK_ID }}
