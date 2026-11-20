@@ -3,6 +3,7 @@ package com.crimsonwarpedcraft.cwcommons.config;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -11,6 +12,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -43,11 +45,26 @@ class ConfigManagerTest {
   @Test
   void loadPropagatesIoException() throws IOException {
     ObjectMapper mockMapper = mock(ObjectMapper.class);
-    doThrow(new IOException("read failed"))
+    IOException readFailure = new IOException("read failed");
+    doThrow(readFailure)
         .when(mockMapper).readValue(any(File.class), eq(TestConfig.class));
     ConfigManager manager = new ConfigManager(mockMapper, mock(Validator.class));
-    assertThrows(IOException.class,
+    IOException error = assertThrows(IOException.class,
         () -> manager.load(new File("anything.yml"), TestConfig.class));
+    assertSame(readFailure, error.getCause());
+    assertTrue(error.getMessage().contains("anything.yml"));
+    assertTrue(error.getMessage().contains("read failed"));
+  }
+
+  @Test
+  void nullRootReportsFileErrorBeforeValidation() {
+    Validator validator = mock(Validator.class);
+    ConfigManager manager = new ConfigManager(mock(ObjectMapper.class), validator);
+    IOException error = assertThrows(IOException.class,
+        () -> manager.load(new File("empty.yml"), TestConfig.class));
+    assertTrue(error.getMessage().contains("empty.yml"));
+    assertTrue(error.getMessage().contains("null"));
+    verifyNoInteractions(validator);
   }
 
   @Test

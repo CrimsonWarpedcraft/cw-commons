@@ -111,9 +111,9 @@ interface. CommandAPI is `compileOnly` and is NOT shaded into the library JAR.
 
 **`bukkit/serialization/`** — shared Bukkit-specific Jackson (de)serializers for `Location` and
 `ItemStack`, bundled by `BukkitModule` (a `SimpleModule` registering all four). Reused by both the
-store and config Bukkit integrations. `LocationDeserializer` requires `world`/`x`/`y`/`z`;
-`yaw`/`pitch` are optional and default to `0`. A stored world that isn't loaded deserializes to a
-`Location` whose `world` is `null`.
+store and config Bukkit integrations. `LocationDeserializer` requires finite `x`/`y`/`z`;
+`yaw`/`pitch` are optional and default to `0` unless `@RequireOrientation` marks omissions.
+A missing, null or unloaded world deserializes to a `Location` whose `world` is `null`.
 
 **`store/bukkit/`** — store-side Bukkit glue:
 - `BukkitDataStoreBuilder` (a `DataStoreBuilder` subclass; `new BukkitDataStoreBuilder(name, dataDir)`

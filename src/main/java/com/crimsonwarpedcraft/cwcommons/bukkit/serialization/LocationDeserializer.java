@@ -5,10 +5,12 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import java.io.IOException;
+import java.math.BigDecimal;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -20,8 +22,8 @@ import org.bukkit.World;
  * match a loaded world at deserialization time the {@code world} field of the returned
  * {@link Location} will be {@code null}.
  *
- * <p>{@code world}, {@code x}, {@code y}, and {@code z} are required; {@code yaw} and {@code pitch}
- * are optional and default to {@code 0} when absent, which keeps hand-written config terse.
+ * <p>{@code world} is optional. Coordinates must be finite numbers; quoted decimal numbers are
+ * also accepted. Optional {@code yaw} and {@code pitch} default to {@code 0} when absent or null.
  *
  * <p>This deserializer is contextual: when the target field is annotated with
  * {@link RequireOrientation}, an absent {@code yaw} or {@code pitch} is read as {@link Float#NaN}
@@ -65,20 +67,55 @@ public final class LocationDeserializer extends StdDeserializer<Location>
   @Override
   public Location deserialize(JsonParser parser, DeserializationContext ctxt) throws IOException {
     JsonNode node = parser.getCodec().readTree(parser);
+    if (!node.isObject()) {
+      return ctxt.reportInputMismatch(Location.class, "Expected a location object with x, y and z");
+    }
+    double x = readNumber(node, "x", ctxt);
+    double y = readNumber(node, "y", ctxt);
+    double z = readNumber(node, "z", ctxt);
+    float yaw = readOrientation(node, "yaw", ctxt);
+    float pitch = readOrientation(node, "pitch", ctxt);
     JsonNode worldNode = node.get("world");
     World world = null;
     if (worldNode != null && !worldNode.isNull()) {
-      world = Bukkit.getWorld(worldNode.asText());
+      if (!worldNode.isTextual()) {
+        return ctxt.reportPropertyInputMismatch(Location.class, "world", "Expected a world name");
+      }
+      world = Bukkit.getWorld(worldNode.textValue());
     }
-    double x = node.get("x").asDouble();
-    double y = node.get("y").asDouble();
-    double z = node.get("z").asDouble();
-    float yaw = readOptionalFloat(node.get("yaw"));
-    float pitch = readOptionalFloat(node.get("pitch"));
     return new Location(world, x, y, z, yaw, pitch);
   }
 
-  private float readOptionalFloat(JsonNode node) {
-    return node != null && !node.isNull() ? (float) node.asDouble() : missingOrientation;
+  private float readOrientation(JsonNode object, String field, DeserializationContext ctxt)
+      throws JsonMappingException {
+    if (!object.hasNonNull(field)) {
+      return missingOrientation;
+    }
+    float value = (float) readNumber(object, field, ctxt);
+    if (!Float.isFinite(value)) {
+      return ctxt.reportPropertyInputMismatch(Location.class, field,
+          "%s is outside the range of a finite float", field);
+    }
+    return value;
+  }
+
+  private static double readNumber(JsonNode object, String field, DeserializationContext ctxt)
+      throws JsonMappingException {
+    JsonNode node = object.path(field);
+    if (node.isNumber() && Double.isFinite(node.doubleValue())) {
+      return node.doubleValue();
+    }
+    if (node.isTextual()) {
+      try {
+        double value = new BigDecimal(node.textValue().trim()).doubleValue();
+        if (Double.isFinite(value)) {
+          return value;
+        }
+      } catch (NumberFormatException ignored) {
+        // Report the same field-aware mapping error as for other non-numeric input.
+      }
+    }
+    return ctxt.reportPropertyInputMismatch(Location.class, field,
+        "Expected a finite number for %s", field);
   }
 }

@@ -2,10 +2,12 @@ package com.crimsonwarpedcraft.cwcommons.bukkit.serialization;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.IOException;
@@ -14,6 +16,8 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 
 class LocationDeserializerTest {
@@ -123,5 +127,45 @@ class LocationDeserializerTest {
 
     assertEquals(12.0f, loc.getYaw(), 0.001f);
     assertEquals(-5.0f, loc.getPitch(), 0.001f);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"null", "true", "[]", "{}", "\"\"", "\"potato\"", "\"NaN\"",
+      "\"Infinity\"", "1e400", "\"1e400\""})
+  void rejectsInvalidCoordinatesInsteadOfCoercingToZero(String value) {
+    JsonMappingException failure = assertThrows(JsonMappingException.class,
+        () -> mapper.readValue("{\"x\":1,\"y\":" + value + ",\"z\":3}", Location.class));
+    assertEquals("y", failure.getPath().getLast().getFieldName());
+  }
+
+  @Test
+  void missingCoordinateNamesTheField() {
+    JsonMappingException failure = assertThrows(JsonMappingException.class,
+        () -> mapper.readValue("{\"x\":0,\"y\":1}", Location.class));
+    assertEquals("z", failure.getPath().getLast().getFieldName());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"\"oops\"", "\"NaN\"", "true", "1e40", "-1e40"})
+  void rejectsInvalidExplicitOrientation(String value) {
+    JsonMappingException failure = assertThrows(JsonMappingException.class, () -> mapper.readValue(
+        "{\"x\":0,\"y\":1,\"z\":2,\"pitch\":" + value + "}", Location.class));
+    assertEquals("pitch", failure.getPath().getLast().getFieldName());
+  }
+
+  @Test
+  void acceptsFiniteQuotedDecimalNumbers() throws IOException {
+    Location loc = mapper.readValue("{\"x\":\"-2.5e1\",\"y\":1,\"z\":2,\"yaw\":\"90.5\"}",
+        Location.class);
+    assertEquals(-25.0, loc.getX());
+    assertEquals(90.5f, loc.getYaw());
+  }
+
+  @Test
+  void rejectsWrongLocationAndWorldShapes() {
+    assertThrows(JsonMappingException.class, () -> mapper.readValue("[]", Location.class));
+    JsonMappingException failure = assertThrows(JsonMappingException.class,
+        () -> mapper.readValue("{\"world\":{},\"x\":0,\"y\":1,\"z\":2}", Location.class));
+    assertEquals("world", failure.getPath().getLast().getFieldName());
   }
 }
