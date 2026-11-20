@@ -1,0 +1,46 @@
+import java.nio.file.Files
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+
+allprojects { p ->
+    def groupId = 'com.github.CrimsonWarpedcraft'
+    def artifact = 'cw-commons'
+    def version = p.providers.gradleProperty('candidateVersion').get()
+    def repo = new File(p.providers.gradleProperty('candidateRepo').get())
+
+    p.repositories.exclusiveContent {
+        forRepository {
+            p.repositories.maven {
+                url = repo.toURI()
+                metadataSources { mavenPom() }
+            }
+        }
+        filter { includeModule(groupId, artifact) }
+    }
+    p.configurations.configureEach {
+        resolutionStrategy.dependencySubstitution {
+            substitute(module("${groupId}:${artifact}")).using(module("${groupId}:${artifact}:${version}"))
+        }
+    }
+
+    p.tasks.register('verifyCandidateResolution') {
+        doLast {
+            def deployed = new File(repo, "com/crimsonwarpedcraft/cwcommons/${artifact}/${version}/${artifact}-${version}.jar")
+            for (def name : ['runtimeClasspath', 'integrationTestRuntimeClasspath']) {
+                def matches = p.configurations.getByName(name).incoming.artifacts.artifacts.findAll {
+                    def id = it.id.componentIdentifier
+                    id instanceof ModuleComponentIdentifier && id.module == artifact
+                }
+                if (matches.size() != 1) {
+                    throw new GradleException("Expected exactly one cw-commons module on ${name}: ${matches}")
+                }
+                def resolved = matches.first()
+                def id = resolved.id.componentIdentifier
+                if (id.group != groupId || id.version != version ||
+                    Files.mismatch(deployed.toPath(), resolved.file.toPath()) != -1L) {
+                    throw new GradleException("${name} did not resolve the staged publication: ${id}")
+                }
+                println "Verified ${name}: ${id} matches the staged commons JAR"
+            }
+        }
+    }
+}
