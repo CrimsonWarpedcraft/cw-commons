@@ -30,7 +30,7 @@ common case — see [custom setups](#advanced-custom-backends-and-serialization)
  DataStore  (ConcurrentDataStore)
      │     • one Repository per namespace; caches and reuses them
      │     • flush() / close() flush every registered namespace
-     │  get / put / delete / flush  →  CompletableFuture<…>
+      │  get / put / update / delete / flush  →  CompletableFuture<…>
      ▼
  Repository<K, V>  (one per namespace)
      │     • serializes K via KeySerializer, V via Jackson
@@ -144,11 +144,14 @@ stored. `getAll()` returns every entry in the namespace as a `Map<K, V>`.
 Failures (e.g. a backend I/O error) surface as an **exceptional completion** wrapping the underlying
 `IOException`; attach `.exceptionally(...)` if you need to handle them.
 
-### Atomic updates (next release)
+<a id="atomic-updates-next-release"></a>
 
-Use `update` when the new value depends on the old one. Two separate `get`/`put` calls can both
-read the same count and lose an increment. The built-in repository reads, transforms and saves
-within one turn of the store's I/O lane. The future returns the new value:
+### Atomic updates
+
+Use `Repository.update` (`v0.4.0` or later) when the new value depends on the old one.
+Two concurrent `get`/`put` sequences can both read the same count and lose an increment.
+The built-in repository reads, transforms and saves within one turn of the store's I/O lane.
+The future returns the new value:
 
 ```java
 CompletableFuture<Integer> updated = killCounts.update(playerId, old -> old.orElse(0) + 1);
@@ -161,8 +164,8 @@ flush to persist it. Other modes acknowledge the backend save, with the same fai
 semantics as `put`. This coordinates operations **only on this store instance**, even with caching
 disabled. It is not a transaction across servers or independent stores.
 
-`update` isn't in `v0.3.4`. Custom `Repository` implementations that do not override it return
-a future failed with `UnsupportedOperationException`.
+Existing custom `Repository` implementations can continue using `get` and `put`. If they do not
+override `update`, it returns a future failed with `UnsupportedOperationException`.
 
 ## Caching and write policies
 
@@ -255,7 +258,7 @@ Three flush triggers cover most plugins; combine them:
 2. **When a player leaves** — [`PlayerDataManager`](store-bukkit.md#playerdatamanager) flushes on
    `PlayerQuitEvent`.
 3. **On a timer** — [`AutoFlushTask`](store-bukkit.md#periodic-flushing-with-autoflushtask) flushes
-   periodically so a crash loses at most one interval of writes.
+   periodically so writes do not have to wait until quit or shutdown to be persisted.
 
 ## Key serialization
 

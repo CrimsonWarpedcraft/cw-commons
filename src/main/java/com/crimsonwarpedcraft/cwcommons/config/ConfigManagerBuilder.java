@@ -15,19 +15,19 @@ import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator
  * Fluent builder for {@link ConfigManager} instances.
  *
  * <p>Obtain one from {@link ConfigManager#builder()}; every collaborator has a sensible default, so
- * {@code ConfigManager.builder().build()} is enough for a plain YAML config. Override the
- * {@link #mapper(ObjectMapper) mapper} or {@link #validator(Validator) validator} when you need to:
+ * {@code ConfigManager.builder().build()} is enough for a plain YAML config. In version 0.4.0
+ * and later, use try-with-resources to release the manager's default validator factory:
  * <pre>{@code
- * // Unreleased / next release: ConfigManager is not AutoCloseable in v0.3.4.
  * try (ConfigManager manager = ConfigManager.builder().build()) {
  *   manager.validate(config);
  * }
  * }</pre>
  *
- * <p>The default mapper reads YAML and binds {@code private} fields; the default validator is the
- * Hibernate validator configured with a {@link ParameterMessageInterpolator} (no EL implementation
- * required). Bukkit plugins should prefer {@code BukkitConfigManagerBuilder}, which also registers
- * the Bukkit (de)serializers so {@code Location}/{@code ItemStack} fields bind.
+ * <p>Override the {@link #mapper(ObjectMapper) mapper} or {@link #validator(Validator) validator}
+ * to supply your own. The default mapper reads YAML and binds {@code private} fields. The default
+ * validator uses Hibernate Validator with a {@link ParameterMessageInterpolator} (no EL
+ * implementation required). Bukkit plugins should prefer {@code BukkitConfigManagerBuilder}; it
+ * also registers the (de)serializers for {@code Location} and {@code ItemStack} fields.
  *
  * @author Copyright (c) Levi Muniz. All Rights Reserved.
  */

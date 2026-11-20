@@ -22,8 +22,8 @@ Together, `PlayerDataManager` and `AutoFlushTask` implement two of the three
 
 ## PlayerDataManager
 
-`PlayerDataManager<V>` wraps a `Repository<UUID, V>` keyed by player UUID and adds two conveniences:
-`get`/`save` that take a `Player` directly, and an automatic flush on `PlayerQuitEvent`.
+`PlayerDataManager<V>` wraps a `Repository<UUID, V>` keyed by player UUID. Its `get`, `save` and
+`update` methods take a `Player` directly. It also flushes the repository on `PlayerQuitEvent`.
 
 ### Setup
 
@@ -58,8 +58,8 @@ chain it as above. Call it exactly once, in `onEnable()` — until you do, no qu
 just as asynchronous: callback thread affinity is not guaranteed, so reschedule to the main
 thread before touching the Bukkit API.
 
-Callers own error handling for the returned `get`/`save` futures; the manager does not log those
-failures for you.
+Callers own error handling for the returned `get`, `save` and `update` futures; the manager does
+not log those failures for you.
 
 ```java
 import org.bukkit.entity.Player;
@@ -75,8 +75,8 @@ manager.get(player).thenAccept(maybeStats -> {
 manager.save(player, new PlayerStats(5, 2));
 ```
 
-**Next release:** for a read/modify/write, call `manager.update` from the Bukkit thread. It takes
-the UUID immediately. The transform runs in the store's I/O lane, so it must not use `player` or
+For a read/modify/write, call `manager.update` (`v0.4.0` or later) on the Bukkit thread so it can
+capture the UUID there. The transform runs in the store's I/O lane, so it must not use `player` or
 wait for another store operation. Observe the returned future as you would for `save`:
 
 ```java
@@ -86,7 +86,7 @@ CompletableFuture<PlayerStats> updated = manager.update(player, current -> {
 });
 ```
 
-See [atomic updates](store.md#atomic-updates-next-release) for scope and persistence guarantees.
+See [atomic updates](store.md#atomic-updates) for scope and persistence guarantees.
 
 ### Auto-flush on quit
 
@@ -121,8 +121,8 @@ store.close();
 ```
 
 The default interval is `AutoFlushTask.DEFAULT_INTERVAL_TICKS` — **6000 ticks (5 minutes at 20 TPS)**.
-A crash therefore loses at most one interval's worth of writes; shorten the interval to trade a
-little extra I/O for a smaller loss window.
+After a crash, buffered changes since the last successful flush can be lost. Shortening the
+interval gives the store more frequent opportunities to persist them.
 
 ### Custom interval
 

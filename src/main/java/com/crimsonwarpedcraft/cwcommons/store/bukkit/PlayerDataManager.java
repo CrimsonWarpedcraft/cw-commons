@@ -79,6 +79,7 @@ public final class PlayerDataManager<T> implements Listener {
    * @param player the player to update
    * @param transform function producing the non-null new data
    * @return a future completing with the acknowledged new value
+   * @since 0.4.0
    */
   public CompletableFuture<T> update(Player player, Function<Optional<T>, T> transform) {
     return repository.update(

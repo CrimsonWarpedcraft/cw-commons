@@ -24,7 +24,7 @@ data storage** — behind small, well-tested APIs so each plugin can focus on it
   `Command` registration interface, so every command in every plugin is declared and registered
   the same way. See [Commands](examples/commands.md).
 - **`DataStore`** — an asynchronous, write-behind key-value store split into namespaced
-  `Repository` instances. Writes are buffered in memory and flushed to disk off the main thread.
+  `Repository` instances. By default, writes are buffered in memory and flushed on a dedicated thread.
   SQLite is bundled; MongoDB is a drop-in alternative behind the same API. Optional Bukkit helpers
   cover per-player data, periodic flushing, and `Location`/`ItemStack` serialization. Start with
   the [Data Store](examples/store.md) guide.

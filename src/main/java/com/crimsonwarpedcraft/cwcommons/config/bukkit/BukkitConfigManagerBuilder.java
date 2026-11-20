@@ -13,12 +13,9 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
  * loading a config.
  *
  * <p>It registers {@link BukkitModule} on the YAML mapper, so config classes can bind
- * {@link org.bukkit.Location} and {@link org.bukkit.inventory.ItemStack} fields. The core
- * {@link ConfigManager} stays Bukkit-free; this convenience
- * wires the coupling in for you, the same way {@code BukkitDataStoreBuilder} does for the data
- * store:
+ * {@link org.bukkit.Location} and {@link org.bukkit.inventory.ItemStack} fields. In version 0.4.0
+ * and later, use try-with-resources for a one-time load; the returned config remains usable:
  * <pre>{@code
- * // Unreleased / next release: ConfigManager is not AutoCloseable in v0.3.4.
  * MyConfig config;
  * try (ConfigManager manager = new BukkitConfigManagerBuilder().build()) {
  *   config = manager.load(configFile, MyConfig.class);

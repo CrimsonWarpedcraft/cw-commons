@@ -113,6 +113,8 @@ public final class ConfigManager implements AutoCloseable {
    *
    * <p>This is idempotent, including when the factory's first close attempt throws. Externally
    * supplied validators and mappers are never closed.
+   *
+   * @since 0.4.0
    */
   @Override
   public synchronized void close() {
