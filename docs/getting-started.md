@@ -18,12 +18,12 @@ dependencies {
 }
 ```
 
-Replace `VERSION` with a [published tag](https://github.com/CrimsonWarpedcraft/cw-commons/releases).
+For available tags and their release notes, see [GitHub Releases](https://github.com/CrimsonWarpedcraft/cw-commons/releases).
+Replace `VERSION` with the tag you want to use.
 Use `main-SNAPSHOT` only when you want the development build. Browse artifacts on
 [JitPack](https://jitpack.io/#CrimsonWarpedcraft/cw-commons).
 
-The `v0.4.0` baseline is **Java 25** and **Paper 26.3**. If your plugin uses `v0.3.4`, see the
-[upgrade notes](releases.md) before adopting the new APIs.
+The `v0.4.0` baseline is **Java 25** and **Paper 26.3**.
 
 ## Transitive dependencies
 

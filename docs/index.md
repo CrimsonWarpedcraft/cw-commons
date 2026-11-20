@@ -42,7 +42,6 @@ The three packages are independent — use one, two, or all of them:
 ## Documentation
 
 - **[Getting Started](getting-started.md)** — add cw-commons as a dependency.
-- **[Release notes](releases.md)** — see what changed in `v0.4.0` and how to upgrade from `v0.3.4`.
 - **[Examples](examples/index.md)** — task-focused guides for config, commands, and storage.
 - **[API Reference](https://jitpack.io/com/github/CrimsonWarpedcraft/cw-commons/latest/javadoc/)** —
   full Javadoc for the latest release, hosted by JitPack.

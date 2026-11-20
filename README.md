@@ -73,9 +73,9 @@ dependencies {
 }
 ```
 
-Replace `VERSION` with a [published tag](https://github.com/CrimsonWarpedcraft/cw-commons/releases),
-or use `main-SNAPSHOT` to test the development branch. The `v0.4.0` baseline is **Java 25** and
-**Paper 26.3**. See the [release and upgrade notes](docs/releases.md) for changes from `v0.3.4`.
+Choose a tag from [GitHub Releases](https://github.com/CrimsonWarpedcraft/cw-commons/releases)
+for `VERSION`. Each release lists its changes and upgrade notes. Use `main-SNAPSHOT` to test the
+development branch. The `v0.4.0` baseline is **Java 25** and **Paper 26.3**.
 
 Jackson, Hibernate Validator, and Jakarta Validation are provided as transitive dependencies —
 no need to declare them separately. If you shade your plugin, include and relocate them under
