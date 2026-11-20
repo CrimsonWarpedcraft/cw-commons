@@ -152,9 +152,8 @@ subclass) builds a `ConfigManager` with `BukkitModule` registered, so config cla
 SQLite-JDBC is the only dependency included in the shadow JAR. Keep its entire driver, native
 resources and JDBC service descriptor at their original paths. Jackson YAML and Hibernate Validator
 are `api` dependencies; they and their transitives (including Jakarta Validation) are supplied by
-the published POM. Consumers can relocate them when shading a plugin. See the
-[publication check](CONTRIBUTING.md#verify-a-maven-candidate-against-the-plugin-template) for the
-CI-only template dependency substitution and how to exercise it locally.
+the published POM. Consumers can relocate them when shading a plugin. The normal JUnit suite
+checks the built JAR and generated POM; see [packaging tests](CONTRIBUTING.md#packaging-tests).
 
 ## Checkstyle notes
 

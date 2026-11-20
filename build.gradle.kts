@@ -3,6 +3,7 @@ import com.github.spotbugs.snom.SpotBugsTask
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.TimeZone
+import org.gradle.api.publish.maven.tasks.GenerateMavenPom
 import org.gradle.external.javadoc.StandardJavadocDocletOptions
 
 plugins {
@@ -98,6 +99,15 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
     jvmArgs("-javaagent:${mockitoAgent.asPath}")
+
+    val jar = tasks.named<ShadowJar>("shadowJar").flatMap { it.archiveFile }
+    val pom = tasks.named<GenerateMavenPom>("generatePomFileForShadowPublication").map { it.destination }
+    inputs.file(jar).withPropertyName("shadowJar").withPathSensitivity(PathSensitivity.NONE)
+    inputs.file(pom).withPropertyName("publicationPom").withPathSensitivity(PathSensitivity.NONE)
+    systemProperty("packaging.jar", jar.get().asFile.absolutePath)
+    systemProperty("packaging.pom", pom.get().absolutePath)
+    systemProperty("packaging.jacksonVersion", libs.versions.jackson.get())
+    systemProperty("packaging.validatorVersion", libs.versions.hibernate.validator.get())
 }
 
 tasks.register<Test>("integrationTest") {
